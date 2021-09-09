@@ -15,11 +15,20 @@ app.use(bodyParser.json());
 //parse request of application/x-www-form-urlencoded
 app.use(bodyParser.urlencoded({ extended: true }));
 
+//passport requirement
+app.use(passport.initialize());
+app.use(passport.session());
+
+const db = require("./models");
+db.sequelize.sync();
+
 app.get("/", (req, res) => {
   res.json({ message: "Hello!" });
 });
 
-const PORT = process.env.BACKEND_PORT || 8001;
+require("./routes/routes.js")(app);
+
+const PORT = process.env.BACKEND_PORT || 6969;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
