@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 //passport requirement
-app.user(passport.initialize());
+app.use(passport.initialize());
 app.use(passport.session());
 
 const db = require("./models");
@@ -28,7 +28,7 @@ app.get("/", (req, res) => {
 
 require("./routes/routes.js")(app);
 
-const PORT = process.env.BACKEND_PORT || 8001;
+const PORT = process.env.BACKEND_PORT || 6969;
 app.listen(PORT, () => {
   console.log(`Server is running on http://localhost:${PORT}`);
 });
