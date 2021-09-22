@@ -23,5 +23,11 @@ db.Sequelize = Sequelize;
 db.sequelize = sequelize;
 
 db.user = require("./user.model.js")(sequelize, Sequelize);
+db.extendeduser = require("./extendeduser.model.js")(sequelize, Sequelize);
+db.program = require("./program.model.js")(sequelize, Sequelize);
+db.workout = require("./workout.model.js")(sequelize, Sequelize);
+db.exercise = require("./exercise.model.js")(sequelize, Sequelize);
+
+db.user.belongsTo(db.extendeduser)
 
 module.exports = db;

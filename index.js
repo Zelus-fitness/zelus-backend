@@ -22,6 +22,12 @@ app.use(passport.session());
 const db = require("./models");
 db.sequelize.sync();
 
+//drop the table if it already exists
+db.sequelize.sync({force:true}).then(()=>{
+  console.log("Drop and resync the DB")
+})
+
+
 app.get("/", (req, res) => {
   res.json({ message: "Hello!" });
 });
