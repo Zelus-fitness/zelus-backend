@@ -12,8 +12,14 @@ module.exports = (app) => {
   //Sign out
   router.post("/signout", users.signOut);
 
-  //
-  router.get("/test", users.test)
+  // Return profile information
+  router.get("/profile", users.getProfile);
+
+  // Change profile
+  router.put("/profile", users.updateProfile);
+
+  // Test JWT and token authorization
+  router.get("/test", users.test);
 
   app.use("/", router);
 };

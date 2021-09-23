@@ -6,6 +6,7 @@ const passport = require("passport");
 const jwt = require("jsonwebtoken");
 const https = require("https");
 const fetch = require("node-fetch");
+const jwt_decode = require("jwt-decode");
 require("../config/passport")(passport);
 
 //Gets token from the header
@@ -73,6 +74,7 @@ exports.signUp = async (req, res) => {
   });
 };
 
+// Sign in
 exports.signIn = async (req, res) => {
   User.findOne({
     where: {
@@ -106,8 +108,82 @@ exports.signIn = async (req, res) => {
   });
 };
 
+// Sign out
 exports.signOut = (req, res) => {
   req.logout();
+};
+
+// Return basic profile information
+exports.getProfile = (req, res) => {
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      res.status(400).send({
+        message: "Bad token",
+      });
+      return;
+    }
+  });
+  if (token) {
+    id = jwt_decode(token).id;
+
+    User.findByPk(id)
+      .then((data) => {
+        res.send(data);
+      })
+      .catch((err) => {
+        res.status(500).send({
+          message: "Error restrieving User with id=" + id,
+        });
+        console.log(err);
+      });
+  } else {
+    return res.status(403).send({ message: "Unauthorized." });
+  }
+};
+
+//Change some basic profile information
+exports.updateProfile = (req, res) => {
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      res.status(400).send({
+        message: "Bad token",
+      });
+      return;
+    }
+  });
+
+  if (token) {
+    const id = jwt_decode(token).id;
+    tempobj = {
+      first_name: req.body.first_name,
+      last_name: req.body.last_name,
+    };
+
+    User.update(tempobj, {
+      where: { id: id },
+    })
+      .then((num) => {
+        if (num == 1) {
+          res.send({
+            message: "User was updated successfully",
+          });
+        } else {
+          res.status(400).send({
+            message: `Cannot update User, ${id}. Maybe User was not found or your request was empty`,
+          });
+        }
+      })
+      .catch((err) => {
+        res.status(500).send({
+          message: "Error updating User with id=" + id,
+        });
+        console.log(err);
+      });
+  } else {
+    return res.status(403).send({ message: "Unauthorized." });
+  }
 };
 
 exports.test = (req, res) => {
