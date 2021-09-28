@@ -129,7 +129,12 @@ exports.getProfile = (req, res) => {
 
     User.findByPk(id)
       .then((data) => {
-        res.send(data);
+        res.send({
+          id: data.id,
+          first_name: data.first_name,
+          last_name: data.last_name,
+          email_address: data.email_address,
+        });
       })
       .catch((err) => {
         res.status(500).send({
