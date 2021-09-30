@@ -116,6 +116,7 @@ exports.signOut = (req, res) => {
 // Return basic profile information
 exports.getProfile = (req, res) => {
   var token = getToken(req.headers);
+
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
       res.status(400).send({

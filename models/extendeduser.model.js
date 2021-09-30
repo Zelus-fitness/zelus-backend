@@ -2,10 +2,10 @@ module.exports = (sequelize, Sequelize) => {
   const ExtendedUser = sequelize.define(
     "extended_user",
     {
-      // id: {
-      //   type: Sequelize.STRING,
-      //   allowNull: false,
-      // },
+      id: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
       height: {
         type: Sequelize.STRING,
         allowNull: false,
@@ -21,6 +21,10 @@ module.exports = (sequelize, Sequelize) => {
       age: {
         type: Sequelize.INTEGER,
         allowNull: false,
+      },
+      profile_picture: {
+        type: Sequelize.STRING,
+        defautlt: "temp profile picture",
       },
     },
     { timestamps: false }
