@@ -1,6 +1,9 @@
 const Userdb = require("../models");
 const User = Userdb.user;
 const Op = Userdb.Sequelize.Op;
+
+const Exercise = Userdb.exercise;
+
 const bcrypt = require("bcrypt");
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
@@ -192,6 +195,86 @@ exports.updateProfile = (req, res) => {
   }
 };
 
+//Create Exercise
+exports.createExercise = (req, res) => {
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      res.status(400).send({
+        message: "Bad token",
+      });
+      return;
+    }
+  });
+
+  if (token) {
+    const id = jwt_decode(token).id;
+    const exercise = {
+      name: req.body.name,
+      public: req.body.public,
+      sets: req.body.sets,
+      reps: req.body.reps,
+      rpe: req.body.rpe,
+      created_by: id,
+    };
+    Exercise.create(exercise)
+      .then((data) => {
+        res.send(data);
+      })
+      .catch((err) => {
+        res.status(500).send({
+          message: err,
+        });
+      });
+  } else {
+    return res.status(403).send({ message: "Unauthorized." });
+  }
+};
+
+// Edit exercise
+exports.editExercise = (req, res) => {
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      res.status(400).send({
+        message: "Bad token",
+      });
+      return;
+    }
+  });
+
+  if (token) {
+    const exercise = {
+      name: req.body.name,
+      public: req.body.public,
+      sets: req.body.sets,
+      reps: req.body.reps,
+      rpe: req.body.rpe,
+    };
+    Exercise.update(exercise, {
+      where: { id: req.body.id },
+    })
+      .then((num) => {
+        if (num == 1) {
+          res.send("Exercise was updated successfully");
+        } else {
+          res.send(400).send({
+            message: `Cannot update Exercise, ${id}. Maybe Exercise was not found or your request was empty`,
+          });
+        }
+      })
+      .catch((err) => {
+        res.status(500).send({
+          message: "Error updating Excerise with id=" + id,
+        });
+        console.log(err);
+      });
+  } else {
+    return res.status(403).send({ message: "Unauthorized." });
+  }
+};
+
+// Test API Endpoint
 exports.test = (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {

@@ -18,6 +18,12 @@ module.exports = (app) => {
   // Change profile
   router.put("/profile", users.updateProfile);
 
+  // Create exercise
+  router.post("/exercise", users.createExercise)
+
+  // Edit exercise
+  router.put("/exercise", users.editExercise)
+
   // Test JWT and token authorization
   router.get("/test", users.test);
 
