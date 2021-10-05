@@ -5,6 +5,7 @@ module.exports = (sequelize, Sequelize) => {
       id: {
         type: Sequelize.STRING,
         allowNull: false,
+        primaryKey: true,
       },
       height: {
         type: Sequelize.STRING,

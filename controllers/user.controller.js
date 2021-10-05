@@ -4,11 +4,9 @@ const Op = Userdb.Sequelize.Op;
 
 const Exercise = Userdb.exercise;
 
-const bcrypt = require("bcrypt");
+const bcrypt = require("bcryptjs");
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
-const https = require("https");
-const fetch = require("node-fetch");
 const jwt_decode = require("jwt-decode");
 require("../config/passport")(passport);
 
