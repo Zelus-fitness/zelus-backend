@@ -36,7 +36,11 @@ comparePassword = function (passw, cb) {
 
 exports.signUp = async (req, res) => {
   //If if request is empty
-  if (!req.body) {
+  if (
+    req.body &&
+    Object.keys(req.body).length === 0 &&
+    Object.getPrototypeOf(req.body) === Object.prototype
+  ) {
     res.status(400).send({
       message: "Content can not be empty!",
     });
@@ -77,6 +81,17 @@ exports.signUp = async (req, res) => {
 
 // Sign in
 exports.signIn = async (req, res) => {
+  if (
+    req.body &&
+    Object.keys(req.body).length === 0 &&
+    Object.getPrototypeOf(req.body) === Object.prototype
+  ) {
+    res.status(400).send({
+      message: "Content can not be empty!",
+    });
+    return;
+  }
+
   User.findOne({
     where: {
       email_address: req.body.email_address.toLowerCase(),
@@ -151,6 +166,17 @@ exports.getProfile = (req, res) => {
 
 //Change some basic profile information
 exports.updateProfile = (req, res) => {
+  if (
+    req.body &&
+    Object.keys(req.body).length === 0 &&
+    Object.getPrototypeOf(req.body) === Object.prototype
+  ) {
+    res.status(400).send({
+      message: "Content can not be empty!",
+    });
+    return;
+  }
+
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
@@ -193,8 +219,54 @@ exports.updateProfile = (req, res) => {
   }
 };
 
+exports.getExercise = (req, res) => {
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      res.status(400).send({
+        message: "Bad token",
+      });
+      return;
+    }
+  });
+
+  if (token) {
+    Exercise.findByPk(req.params.id)
+      .then((data) => {
+        res.send({
+          id: data.id,
+          name: data.name,
+          public: data.public,
+          sets: data.sets,
+          reps: data.reps,
+          rpe: data.rpe,
+          created_by: data.created_by,
+        });
+      })
+      .catch((err) => {
+        res.status(500).send({
+          message: `Error getting exercise by id ${req.params.id}`,
+        });
+        console.log(err);
+      });
+  } else {
+    return res.status(403).send({ message: "Unauthorized." });
+  }
+};
+
 //Create Exercise
 exports.createExercise = (req, res) => {
+  if (
+    req.body &&
+    Object.keys(req.body).length === 0 &&
+    Object.getPrototypeOf(req.body) === Object.prototype
+  ) {
+    res.status(400).send({
+      message: "Content can not be empty!",
+    });
+    return;
+  }
+
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
@@ -231,6 +303,17 @@ exports.createExercise = (req, res) => {
 
 // Edit exercise
 exports.editExercise = (req, res) => {
+  if (
+    req.body &&
+    Object.keys(req.body).length === 0 &&
+    Object.getPrototypeOf(req.body) === Object.prototype
+  ) {
+    res.status(400).send({
+      message: "Content can not be empty!",
+    });
+    return;
+  }
+
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
@@ -250,7 +333,7 @@ exports.editExercise = (req, res) => {
       rpe: req.body.rpe,
     };
     Exercise.update(exercise, {
-      where: { id: req.body.id },
+      where: { id: req.params.id },
     })
       .then((num) => {
         if (num == 1) {
@@ -269,6 +352,57 @@ exports.editExercise = (req, res) => {
       });
   } else {
     return res.status(403).send({ message: "Unauthorized." });
+  }
+};
+
+exports.deleteExercise = (req, res) => {
+  const exercise_id = req.params.id;
+
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      res.status(400).send({
+        message: "Bad token",
+      });
+      return;
+    }
+  });
+
+  if (token) {
+    const token_user_id = jwt_decode(token).id;
+    Exercise.findByPk(exercise_id)
+      .then((data) => {
+        var exercise_created_by = data.created_by;
+        if (exercise_created_by === token_user_id) {
+          Exercise.destroy({
+            where: { id: exercise_id },
+          })
+            .then((num) => {
+              if (num === 1) {
+                res.send({
+                  message: "Exercise was deleted successfully",
+                });
+              } else {
+                res.status(400).send({
+                  message: "You did not create this exercise",
+                });
+              }
+            })
+            .catch((err) => {
+              console.log(err);
+              res
+                .status(500)
+                .send({ message: `Could not delete Exercise ${exercise_id}` });
+            });
+        }
+      })
+      .catch((err) => {
+        res.status(500).send({
+          message: err,
+        });
+      });
+  } else {
+    return res.status(403).send({ message: "Unauthorized" });
   }
 };
 

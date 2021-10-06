@@ -18,11 +18,17 @@ module.exports = (app) => {
   // Change profile
   router.put("/profile", users.updateProfile);
 
+  //Return exercise by id
+  router.get("/exercise/:id", users.getExercise);
+
   // Create exercise
-  router.post("/exercise", users.createExercise)
+  router.post("/exercise", users.createExercise);
 
   // Edit exercise
-  router.put("/exercise", users.editExercise)
+  router.put("/exercise/:id", users.editExercise);
+
+  // Delete Exercise
+  router.delete("/exercise/:id", users.deleteExercise);
 
   // Test JWT and token authorization
   router.get("/test", users.test);
