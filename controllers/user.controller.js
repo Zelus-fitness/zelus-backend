@@ -4,7 +4,7 @@ const Op = Userdb.Sequelize.Op;
 
 const Exercise = Userdb.exercise;
 
-const bcrypt = require("bcryptjs");
+const bcrypt = require("bcrypt");
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
 const jwt_decode = require("jwt-decode");
