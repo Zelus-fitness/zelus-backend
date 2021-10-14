@@ -42,7 +42,7 @@ var options = {
   cert: cert,
 };
 
-const PORT = process.env.BACKEND_PORT || 6969;
+const PORT = process.env.PORT;
 
 var server = https.createServer(options, app);
 
