@@ -92,3 +92,6 @@ Thumbs.db
 
 #Docker File
 docker-compose.yml
+
+selfsigned.crt 
+selfsigned.key

@@ -35,17 +35,17 @@ app.get("/", (req, res) => {
 
 require("./routes/routes.js")(app);
 
-var key = fs.readFileSync("./selfsigned.key");
-var cert = fs.readFileSync("./selfsigned.crt");
-var options = {
-  key: key,
-  cert: cert,
-};
+// var key = fs.readFileSync("./selfsigned.key");
+// var cert = fs.readFileSync("./selfsigned.crt");
+// var options = {
+//   key: key,
+//   cert: cert,
+// };
 
 const PORT = process.env.PORT;
 
-var server = https.createServer(options, app);
+// var server = https.createServer(options, app);
 
-server.listen(PORT, () => {
+app.listen(PORT, () => {
   console.log(`Server is running on https://localhost:${PORT}`);
 });
