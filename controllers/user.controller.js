@@ -39,6 +39,7 @@ exports.signUp = async (req, res) => {
   if (!req.body) {
     res.status(400).send({
       message: "Content can not be empty!",
+      success: false,
     });
     return;
   }
@@ -49,6 +50,7 @@ exports.signUp = async (req, res) => {
   if (!re.test(req.body.email_address)) {
     res.status(400).send({
       message: "The email is invalid!",
+      success: false,
     });
     return;
   }
@@ -65,11 +67,13 @@ exports.signUp = async (req, res) => {
 
     User.create(user)
       .then((data) => {
+        data.sucess = true;
         res.send(data);
       })
       .catch((err) => {
         res.status(500).send({
           message: err.message || "Some error occurred while creating the User",
+          success: false,
         });
       });
   });
@@ -85,6 +89,7 @@ exports.signIn = async (req, res) => {
     if (!user) {
       return res.status(401).send({
         message: "Authentication failed. User not found",
+        success: false,
       });
     }
     bcrypt.compare(
@@ -102,6 +107,7 @@ exports.signIn = async (req, res) => {
         } else {
           res.status(401).send({
             message: "Authentication failed. Wrong password",
+            sucess: false,
           });
         }
       }
@@ -122,6 +128,7 @@ exports.getProfile = (req, res) => {
     if (err) {
       res.status(400).send({
         message: "Bad token",
+        success: false,
       });
       return;
     }
@@ -141,11 +148,12 @@ exports.getProfile = (req, res) => {
       .catch((err) => {
         res.status(500).send({
           message: "Error restrieving User with id=" + id,
+          sucess: false,
         });
         console.log(err);
       });
   } else {
-    return res.status(403).send({ message: "Unauthorized." });
+    return res.status(403).send({ message: "Unauthorized.", success: false });
   }
 };
 
@@ -156,6 +164,7 @@ exports.updateProfile = (req, res) => {
     if (err) {
       res.status(400).send({
         message: "Bad token",
+        success: false,
       });
       return;
     }
@@ -175,21 +184,24 @@ exports.updateProfile = (req, res) => {
         if (num == 1) {
           res.send({
             message: "User was updated successfully",
+            success: true,
           });
         } else {
           res.status(400).send({
             message: `Cannot update User, ${id}. Maybe User was not found or your request was empty`,
+            success: false,
           });
         }
       })
       .catch((err) => {
         res.status(500).send({
           message: "Error updating User with id=" + id,
+          success: false,
         });
         console.log(err);
       });
   } else {
-    return res.status(403).send({ message: "Unauthorized." });
+    return res.status(403).send({ message: "Unauthorized.", success: false });
   }
 };
 
@@ -200,6 +212,7 @@ exports.createExercise = (req, res) => {
     if (err) {
       res.status(400).send({
         message: "Bad token",
+        success: false,
       });
       return;
     }
@@ -217,15 +230,17 @@ exports.createExercise = (req, res) => {
     };
     Exercise.create(exercise)
       .then((data) => {
+        data.sucess = true;
         res.send(data);
       })
       .catch((err) => {
         res.status(500).send({
           message: err,
+          success: false,
         });
       });
   } else {
-    return res.status(403).send({ message: "Unauthorized." });
+    return res.status(403).send({ message: "Unauthorized.", success: false });
   }
 };
 
@@ -236,6 +251,7 @@ exports.editExercise = (req, res) => {
     if (err) {
       res.status(400).send({
         message: "Bad token",
+        success: false,
       });
       return;
     }
@@ -254,21 +270,26 @@ exports.editExercise = (req, res) => {
     })
       .then((num) => {
         if (num == 1) {
-          res.send("Exercise was updated successfully");
+          res.send({
+            message: "Exercise was updated successfully",
+            success: true,
+          });
         } else {
           res.send(400).send({
             message: `Cannot update Exercise, ${id}. Maybe Exercise was not found or your request was empty`,
+            success: false,
           });
         }
       })
       .catch((err) => {
         res.status(500).send({
           message: "Error updating Excerise with id=" + id,
+          success: false,
         });
         console.log(err);
       });
   } else {
-    return res.status(403).send({ message: "Unauthorized." });
+    return res.status(403).send({ message: "Unauthorized.", success: false });
   }
 };
 
@@ -279,13 +300,14 @@ exports.test = (req, res) => {
     if (err) {
       res.status(400).send({
         message: "Bad token",
+        success: false,
       });
       return;
     }
   });
   if (token) {
-    res.send("Token is authenticated");
+    res.send({ message: "Token is authenticated", success: true });
   } else {
-    return res.status(403).send({ message: "Unauthorized" });
+    return res.status(403).send({ message: "Unauthorized", success: false });
   }
 };
