@@ -14,6 +14,7 @@ module.exports = (sequelize, Sequelize) => {
       },
       public: {
         type: Sequelize.BOOLEAN,
+        allowNull: false,
       },
       sets: {
         type: Sequelize.INTEGER,
@@ -26,6 +27,7 @@ module.exports = (sequelize, Sequelize) => {
       },
       created_by: {
         type: Sequelize.STRING,
+        allowNull: false,
       },
     },
     { timestamps: false }
