@@ -237,6 +237,7 @@ exports.getExercise = (req, res) => {
     if (err) {
       res.status(400).send({
         message: "Bad token",
+        success: false,
       });
       return;
     }
@@ -258,11 +259,12 @@ exports.getExercise = (req, res) => {
       .catch((err) => {
         res.status(500).send({
           message: `Error getting exercise by id ${req.params.id}`,
+          success: false,
         });
         console.log(err);
       });
   } else {
-    return res.status(403).send({ message: "Unauthorized." });
+    return res.status(403).send({ message: "Unauthorized.", success: false });
   }
 };
 
@@ -325,6 +327,7 @@ exports.editExercise = (req, res) => {
   ) {
     res.status(400).send({
       message: "Content can not be empty!",
+      success: false,
     });
     return;
   }
@@ -384,6 +387,7 @@ exports.deleteExercise = (req, res) => {
     if (err) {
       res.status(400).send({
         message: "Bad token",
+        success: false,
       });
       return;
     }
@@ -402,28 +406,32 @@ exports.deleteExercise = (req, res) => {
               if (num === 1) {
                 res.send({
                   message: "Exercise was deleted successfully",
+                  success: true,
                 });
               } else {
                 res.status(400).send({
                   message: "You did not create this exercise",
+                  success: false,
                 });
               }
             })
             .catch((err) => {
               console.log(err);
-              res
-                .status(500)
-                .send({ message: `Could not delete Exercise ${exercise_id}` });
+              res.status(500).send({
+                message: `Could not delete Exercise ${exercise_id}`,
+                success: false,
+              });
             });
         }
       })
       .catch((err) => {
         res.status(500).send({
           message: err,
+          success: false,
         });
       });
   } else {
-    return res.status(403).send({ message: "Unauthorized" });
+    return res.status(403).send({ message: "Unauthorized", success: false });
   }
 };
 
