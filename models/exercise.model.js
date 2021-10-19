@@ -3,8 +3,8 @@ module.exports = (sequelize, Sequelize) => {
     "exercise",
     {
       id: {
-        type: Sequelize.STRING,
-        defaultValue: Sequelize.UUIDV4,
+        type: Sequelize.UUID,
+        defaultValue: Sequelize.fn(uuid_generate_v4()),
         primaryKey: true,
         allowNull: false,
       },
