@@ -50,7 +50,7 @@ exports.signUp = async (req, res) => {
 
   //checks if it is a valid email
   const re =
-    /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
+    /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1, 3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   if (!re.test(req.body.email_address)) {
     res.status(400).send({
       message: "The email is invalid!",
@@ -253,6 +253,7 @@ exports.getExercise = (req, res) => {
           sets: data.sets,
           reps: data.reps,
           rpe: data.rpe,
+          type: data.type,
           created_by: data.created_by,
         });
       })
@@ -300,6 +301,7 @@ exports.createExercise = (req, res) => {
       sets: req.body.sets,
       reps: req.body.reps,
       rpe: req.body.rpe,
+      type: req.body.type,
       created_by: id,
     };
     Exercise.create(exercise)
@@ -350,6 +352,7 @@ exports.editExercise = (req, res) => {
       sets: req.body.sets,
       reps: req.body.reps,
       rpe: req.body.rpe,
+      type: req.body.type,
     };
     Exercise.update(exercise, {
       where: { id: req.params.id },

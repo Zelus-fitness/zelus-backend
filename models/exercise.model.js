@@ -4,7 +4,7 @@ module.exports = (sequelize, Sequelize) => {
     {
       id: {
         type: Sequelize.UUID,
-        defaultValue: Sequelize.fn('uuid_generate_v4'),
+        defaultValue: Sequelize.fn("uuid_generate_v4"),
         primaryKey: true,
         allowNull: false,
       },
@@ -26,6 +26,10 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.INTEGER,
       },
       created_by: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
+      type: {
         type: Sequelize.STRING,
         allowNull: false,
       },
