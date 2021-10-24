@@ -71,8 +71,8 @@ exports.signUp = async (req, res) => {
 
     User.create(user)
       .then((data) => {
-        var successdata = { data, success: true };
-        res.send(successdata);
+        data.success = true;
+        res.send(data);
       })
       .catch((err) => {
         res.status(500).send({
