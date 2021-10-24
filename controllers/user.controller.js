@@ -73,6 +73,7 @@ exports.signUp = async (req, res) => {
       .then((data) => {
         data.success = true;
         res.send(data);
+        console.log(data);
       })
       .catch((err) => {
         res.status(500).send({
@@ -308,7 +309,6 @@ exports.createExercise = (req, res) => {
       .then((data) => {
         data.success = true;
         res.send(data);
-        console.log(data);
       })
       .catch((err) => {
         res.status(500).send({
