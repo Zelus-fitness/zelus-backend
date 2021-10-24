@@ -122,7 +122,7 @@ exports.signIn = async (req, res) => {
         } else {
           res.status(401).send({
             message: "Authentication failed. Wrong password",
-            sucess: false,
+            success: false,
           });
         }
       }
@@ -163,7 +163,7 @@ exports.getProfile = (req, res) => {
       .catch((err) => {
         res.status(500).send({
           message: "Error restrieving User with id=" + id,
-          sucess: false,
+          success: false,
         });
         console.log(err);
       });
@@ -306,8 +306,9 @@ exports.createExercise = (req, res) => {
     };
     Exercise.create(exercise)
       .then((data) => {
-        data.sucess = true;
+        data.success = true;
         res.send(data);
+        console.log(data);
       })
       .catch((err) => {
         res.status(500).send({
