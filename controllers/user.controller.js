@@ -64,7 +64,7 @@ exports.signUp = async (req, res) => {
     const user = {
       first_name: req.body.first_name,
       last_name: req.body.last_name,
-      email_address: req.body.email_address,
+      email_address: req.body.email_address.toLowerCase(),
       password: hash,
       created_datetime: Date.now(),
     };
@@ -95,10 +95,10 @@ exports.signIn = async (req, res) => {
     });
     return;
   }
-  console.log(req)
+  console.log(req);
   User.findOne({
     where: {
-      email_address: req.body.email_address,
+      email_address: req.body.email_address.toLowerCase(),
     },
   }).then((user) => {
     if (!user) {
@@ -452,7 +452,7 @@ exports.getExerciseByUser = (req, res) => {
 
   if (token) {
     const id = jwt_decode(token).id;
-    console.log(id)
+    console.log(id);
     Exercise.findAll({
       where: {
         created_by: id,
