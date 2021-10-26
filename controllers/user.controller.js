@@ -95,10 +95,10 @@ exports.signIn = async (req, res) => {
     });
     return;
   }
-
+  console.log(req)
   User.findOne({
     where: {
-      email_address: req.body.email_address.toLowerCase(),
+      email_address: req.body.email_address,
     },
   }).then((user) => {
     if (!user) {
