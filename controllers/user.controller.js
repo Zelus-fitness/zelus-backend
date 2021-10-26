@@ -306,7 +306,7 @@ exports.createExercise = (req, res) => {
     };
     Exercise.create(exercise)
       .then((data) => {
-        data.success = true;
+        var data = { ...data, success: true };
         res.send(data);
       })
       .catch((err) => {
