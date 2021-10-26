@@ -457,6 +457,7 @@ exports.getExerciseByUser = (req, res) => {
       where: {
         created_by: id,
       },
+      raw: true,
     })
       .then((data) => {
         var data = { ...data, success: true };
