@@ -459,7 +459,7 @@ exports.getExerciseByUser = (req, res) => {
       },
     })
       .then((data) => {
-        var data = { ...data, success: true };
+        var data = { data: [data], success: true };
         res.send(data);
       })
       .catch((error) => {
