@@ -438,6 +438,41 @@ exports.deleteExercise = (req, res) => {
   }
 };
 
+exports.getExerciseByUser = (req, res) => {
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      res.status(400).send({
+        message: "Bad token",
+        success: false,
+      });
+      return;
+    }
+  });
+
+  if (token) {
+    const id = jwt_decode(token).id;
+    console.log(id)
+    Exercise.findAll({
+      where: {
+        created_by: id,
+      },
+    })
+      .then((data) => {
+        var data = { ...data, success: true };
+        res.send(data);
+      })
+      .catch((error) => {
+        res.status(400).send({
+          message: "User not recognized",
+          success: false,
+        });
+      });
+  } else {
+    return res.status(403).send({ message: "Unauthorized", success: false });
+  }
+};
+
 // Test API Endpoint
 exports.test = (req, res) => {
   var token = getToken(req.headers);
