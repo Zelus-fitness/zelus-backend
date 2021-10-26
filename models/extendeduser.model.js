@@ -27,6 +27,18 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
         defautlt: "temp profile picture",
       },
+      exercise_favorite: {
+        type: Sequelize.ARRAY,
+      },
+      workout_favorite: {
+        type: Sequelize.ARRAY,
+      },
+      exercise_create: {
+        type: Sequelize.ARRAY,
+      },
+      workout_create: {
+        type: Sequelize.ARRAY,
+      }, 
     },
     { timestamps: false }
   );
