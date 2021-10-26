@@ -452,6 +452,7 @@ exports.getExerciseByUser = (req, res) => {
 
   if (token) {
     const id = jwt_decode(token).id;
+    console.log(id)
     Exercise.findAll({
       where: {
         created_by: id,
