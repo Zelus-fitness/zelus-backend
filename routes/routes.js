@@ -30,6 +30,9 @@ module.exports = (app) => {
   // Delete Exercise
   router.delete("/exercise/:id", users.deleteExercise);
 
+  // Return all the exercises based on user ID
+  router.get("/exercise/user",  users.getExerciseByUser)
+
   // Test JWT and token authorization
   router.get("/test", users.test);
 
