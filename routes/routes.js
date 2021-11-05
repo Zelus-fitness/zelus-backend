@@ -33,6 +33,16 @@ module.exports = (app) => {
   // Return all the exercises based on user ID
   router.get("/user/exercise/",  users.getExerciseByUser)
 
+  // Gets which exercises were favorited based on user ID
+  router.get("/favorite", users.getFavoriteExercise)
+
+  // Favorites an exercise, :id url is exercise url
+  router.post("/favorite/:id", users.createFavoriteExercise)
+
+  // Unfavorites Exercise, :id url is exercise url
+  router.post("/unfavorite/:idzt", users.unfavoriteExercise)
+
+
   // Test JWT and token authorization
   router.get("/test", users.test);
 

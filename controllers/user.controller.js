@@ -438,6 +438,7 @@ exports.deleteExercise = (req, res) => {
   }
 };
 
+// Return all exercises based on user ID
 exports.getExerciseByUser = (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
@@ -452,7 +453,7 @@ exports.getExerciseByUser = (req, res) => {
 
   if (token) {
     const id = jwt_decode(token).id;
-    console.log(id);
+
     Exercise.findAll({
       where: {
         created_by: id,
@@ -472,6 +473,32 @@ exports.getExerciseByUser = (req, res) => {
     return res.status(403).send({ message: "Unauthorized", success: false });
   }
 };
+
+exports.getFavoriteExercise = (req,res) =>{
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      res.status(400).send({
+        message: "Bad token",
+        success: false,
+      });
+      return;
+    }
+  });
+
+  if(token){
+    const id = jwt_decode(token).id;
+
+  }
+}
+
+exports.createFavoriteExercise = (req,res) =>{
+
+}
+
+exports.unfavoriteExercise = (req,res) =>{
+  
+}
 
 // Test API Endpoint
 exports.test = (req, res) => {
