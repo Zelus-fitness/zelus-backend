@@ -47,5 +47,5 @@ const PORT = process.env.PORT;
 // var server = https.createServer(options, app);
 
 app.listen(PORT, () => {
-  console.log(`Server is running on https://localhost:${PORT}`);
+  console.log(`Server is running on http://localhost:${PORT}`);
 });

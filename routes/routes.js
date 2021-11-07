@@ -40,7 +40,7 @@ module.exports = (app) => {
   router.post("/favorite/:id", users.createFavoriteExercise)
 
   // Unfavorites Exercise, :id url is exercise url
-  router.post("/unfavorite/:idzt", users.unfavoriteExercise)
+  router.post("/unfavorite/:id", users.unfavoriteExercise)
 
 
   // Test JWT and token authorization

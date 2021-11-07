@@ -1,13 +1,13 @@
 const Userdb = require("../models");
 const User = Userdb.user;
 const Op = Userdb.Sequelize.Op;
-
 const Exercise = Userdb.exercise;
-
+const ExtendedUser = Userdb.extendeduser;
 const bcrypt = require("bcrypt");
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
 const jwt_decode = require("jwt-decode");
+
 require("../config/passport")(passport);
 
 //Gets token from the header
@@ -41,7 +41,7 @@ exports.signUp = async (req, res) => {
     Object.keys(req.body).length === 0 &&
     Object.getPrototypeOf(req.body) === Object.prototype
   ) {
-    res.status(400).send({
+    return res.status(400).send({
       message: "Content can not be empty!",
       success: false,
     });
@@ -52,7 +52,7 @@ exports.signUp = async (req, res) => {
   const re =
     /^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1, 3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\-0-9]+\.)+[a-zA-Z]{2,}))$/;
   if (!re.test(req.body.email_address)) {
-    res.status(400).send({
+    return res.status(400).send({
       message: "The email is invalid!",
       success: false,
     });
@@ -73,9 +73,14 @@ exports.signUp = async (req, res) => {
       .then((data) => {
         var data = { ...data, success: true };
         res.send(data);
+        ExtendedUser.create({ id: data.dataValues.id })
+          .then((data) => {})
+          .catch((err) => {
+            console.log(err);
+          });
       })
       .catch((err) => {
-        res.status(500).send({
+        return res.status(500).send({
           message: err.message || "Some error occurred while creating the User",
           success: false,
         });
@@ -90,7 +95,7 @@ exports.signIn = async (req, res) => {
     Object.keys(req.body).length === 0 &&
     Object.getPrototypeOf(req.body) === Object.prototype
   ) {
-    res.status(400).send({
+    return res.status(400).send({
       message: "Content can not be empty!",
     });
     return;
@@ -120,7 +125,7 @@ exports.signIn = async (req, res) => {
 
           res.json({ success: true, token: "JWT " + token });
         } else {
-          res.status(401).send({
+          return res.status(401).send({
             message: "Authentication failed. Wrong password",
             success: false,
           });
@@ -141,7 +146,7 @@ exports.getProfile = (req, res) => {
 
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
-      res.status(400).send({
+      return res.status(400).send({
         message: "Bad token",
         success: false,
       });
@@ -161,7 +166,7 @@ exports.getProfile = (req, res) => {
         });
       })
       .catch((err) => {
-        res.status(500).send({
+        return res.status(500).send({
           message: "Error restrieving User with id=" + id,
           success: false,
         });
@@ -179,7 +184,7 @@ exports.updateProfile = (req, res) => {
     Object.keys(req.body).length === 0 &&
     Object.getPrototypeOf(req.body) === Object.prototype
   ) {
-    res.status(400).send({
+    return res.status(400).send({
       message: "Content can not be empty!",
     });
     return;
@@ -188,7 +193,7 @@ exports.updateProfile = (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
-      res.status(400).send({
+      return res.status(400).send({
         message: "Bad token",
         success: false,
       });
@@ -213,14 +218,14 @@ exports.updateProfile = (req, res) => {
             success: true,
           });
         } else {
-          res.status(400).send({
+          return res.status(400).send({
             message: `Cannot update User, ${id}. Maybe User was not found or your request was empty`,
             success: false,
           });
         }
       })
       .catch((err) => {
-        res.status(500).send({
+        return res.status(500).send({
           message: "Error updating User with id=" + id,
           success: false,
         });
@@ -235,7 +240,7 @@ exports.getExercise = (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
-      res.status(400).send({
+      return res.status(400).send({
         message: "Bad token",
         success: false,
       });
@@ -258,7 +263,7 @@ exports.getExercise = (req, res) => {
         });
       })
       .catch((err) => {
-        res.status(500).send({
+        return res.status(500).send({
           message: `Error getting exercise by id ${req.params.id}`,
           success: false,
         });
@@ -276,7 +281,7 @@ exports.createExercise = (req, res) => {
     Object.keys(req.body).length === 0 &&
     Object.getPrototypeOf(req.body) === Object.prototype
   ) {
-    res.status(400).send({
+    return res.status(400).send({
       message: "Content can not be empty!",
     });
     return;
@@ -285,7 +290,7 @@ exports.createExercise = (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
-      res.status(400).send({
+      return res.status(400).send({
         message: "Bad token",
         success: false,
       });
@@ -310,7 +315,7 @@ exports.createExercise = (req, res) => {
         res.send(data);
       })
       .catch((err) => {
-        res.status(500).send({
+        return res.status(500).send({
           message: err,
           success: false,
         });
@@ -327,7 +332,7 @@ exports.editExercise = (req, res) => {
     Object.keys(req.body).length === 0 &&
     Object.getPrototypeOf(req.body) === Object.prototype
   ) {
-    res.status(400).send({
+    return res.status(400).send({
       message: "Content can not be empty!",
       success: false,
     });
@@ -337,7 +342,7 @@ exports.editExercise = (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
-      res.status(400).send({
+      return res.status(400).send({
         message: "Bad token",
         success: false,
       });
@@ -371,7 +376,7 @@ exports.editExercise = (req, res) => {
         }
       })
       .catch((err) => {
-        res.status(500).send({
+        return res.status(500).send({
           message: "Error updating Excerise with id=" + id,
           success: false,
         });
@@ -388,7 +393,7 @@ exports.deleteExercise = (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
-      res.status(400).send({
+      return res.status(400).send({
         message: "Bad token",
         success: false,
       });
@@ -412,7 +417,7 @@ exports.deleteExercise = (req, res) => {
                   success: true,
                 });
               } else {
-                res.status(400).send({
+                return res.status(400).send({
                   message: "You did not create this exercise",
                   success: false,
                 });
@@ -420,7 +425,7 @@ exports.deleteExercise = (req, res) => {
             })
             .catch((err) => {
               console.log(err);
-              res.status(500).send({
+              return res.status(500).send({
                 message: `Could not delete Exercise ${exercise_id}`,
                 success: false,
               });
@@ -428,7 +433,7 @@ exports.deleteExercise = (req, res) => {
         }
       })
       .catch((err) => {
-        res.status(500).send({
+        return res.status(500).send({
           message: err,
           success: false,
         });
@@ -443,7 +448,7 @@ exports.getExerciseByUser = (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
-      res.status(400).send({
+      return res.status(400).send({
         message: "Bad token",
         success: false,
       });
@@ -464,7 +469,7 @@ exports.getExerciseByUser = (req, res) => {
         res.send(data);
       })
       .catch((error) => {
-        res.status(400).send({
+        return res.status(400).send({
           message: "User not recognized",
           success: false,
         });
@@ -474,11 +479,11 @@ exports.getExerciseByUser = (req, res) => {
   }
 };
 
-exports.getFavoriteExercise = (req,res) =>{
+exports.getFavoriteExercise = (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
-      res.status(400).send({
+      return res.status(400).send({
         message: "Bad token",
         success: false,
       });
@@ -486,26 +491,164 @@ exports.getFavoriteExercise = (req,res) =>{
     }
   });
 
-  if(token){
+  if (token) {
     const id = jwt_decode(token).id;
-
+    ExtendedUser.findAll({
+      where: {
+        id: id,
+      },
+    })
+      .then((data) => {
+        var data_object = { data: { data }, success: true };
+        res.send(data_object);
+      })
+      .catch((error) => {
+        return res.status(400).send({
+          message: "User not recognized",
+          success: false,
+        });
+      });
+  } else {
+    return res.status(403).send({ message: "Unauthorized", success: false });
   }
-}
+};
 
-exports.createFavoriteExercise = (req,res) =>{
+exports.createFavoriteExercise = (req, res) => {
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      return res.status(400).send({
+        message: "Bad token",
+        success: false,
+      });
+      return;
+    }
+  });
 
-}
+  if (token) {
+    const id = jwt_decode(token).id;
+    ExtendedUser.findAll({
+      where: {
+        id: id,
+      },
+    })
+      .then((data) => {
+        var current_array = data[0].dataValues.exercise_favorite;
+        var exercise_array = [];
+        const index = current_array?.indexOf(req.params.id);
+        if (!current_array) {
+          exercise_array = [req.params.id];
+        } else if (index >= 0) {
+          return res.send({
+            message: "This cannot be favorited",
+            success: false,
+          });
+        } else {
+          exercise_array = current_array.concat([req.params.id]);
+        }
+        ExtendedUser.update(
+          { exercise_favorite: exercise_array },
+          {
+            where: { id: id },
+          }
+        )
+          .then((data) => {
+            res.send({ data: { data }, success: true });
+          })
+          .catch((error) => {
+            console.log(error);
+            return res.status(400).send({
+              message: "There has been an error",
+              success: false,
+            });
+          });
+      })
+      .catch((error) => {
+        console.log(error);
+        return res.status(400).send({
+          message: "User not recognized",
+          success: false,
+        });
+      });
+  } else {
+    return res.status(403).send({ message: "Unauthorized", success: false });
+  }
+};
 
-exports.unfavoriteExercise = (req,res) =>{
-  
-}
+exports.unfavoriteExercise = (req, res) => {
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      return res.status(400).send({
+        message: "Bad token",
+        success: false,
+      });
+      return;
+    }
+  });
+
+  if (token) {
+    const id = jwt_decode(token).id;
+    ExtendedUser.findAll({
+      where: {
+        id: id,
+      },
+    })
+      .then((data) => {
+        var current_array = data[0].dataValues.exercise_favorite;
+        if (!current_array) {
+          return res.status(400).send({
+            message: "You cannot unfavorite this",
+            success: false,
+          });
+        } else {
+          const index = data[0].dataValues.exercise_favorite.indexOf(
+            req.params.id
+          );
+          if (index > -1) {
+            data[0].dataValues.exercise_favorite.splice(index, 1);
+            var exercise_array = data[0].dataValues.exercise_favorite;
+          } else {
+            return res.status(400).send({
+              message: "You cannot unfavorite this",
+              success: false,
+            });
+          }
+        }
+        ExtendedUser.update(
+          { exercise_favorite: exercise_array },
+          {
+            where: { id: id },
+          }
+        )
+          .then((data) => {
+            res.send({ data: { data }, success: true });
+          })
+          .catch((error) => {
+            return res.status(400).send({
+              message: error,
+              success: false,
+            });
+          });
+      })
+      .catch((error) => {
+        console.log(error);
+        return res.status(400).send({
+          message: "User not recognized",
+          success: false,
+        });
+      });
+  } else {
+    return res.status(403).send({ message: "Unauthorized", success: false });
+  }
+};
 
 // Test API Endpoint
 exports.test = (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
-      res.status(400).send({
+      return res.status(400).send({
         message: "Bad token",
         success: false,
       });
