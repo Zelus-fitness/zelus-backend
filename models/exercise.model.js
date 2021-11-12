@@ -12,10 +12,6 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
         allowNull: false,
       },
-      public: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-      },
       details: {
         type: Sequelize.JSONB,
         allowNull: false,
