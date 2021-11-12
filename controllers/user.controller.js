@@ -1,8 +1,10 @@
 const Userdb = require("../models");
 const User = Userdb.user;
+const sequelize_function = Userdb.sequelize;
 const Op = Userdb.Sequelize.Op;
 const Exercise = Userdb.exercise;
 const ExtendedUser = Userdb.extendeduser;
+const Workout = Userdb.workout;
 const bcrypt = require("bcrypt");
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
@@ -45,7 +47,6 @@ exports.signUp = async (req, res) => {
       message: "Content can not be empty!",
       success: false,
     });
-    return;
   }
 
   //checks if it is a valid email
@@ -56,7 +57,6 @@ exports.signUp = async (req, res) => {
       message: "The email is invalid!",
       success: false,
     });
-    return;
   }
 
   //Encrypts password for database
@@ -71,10 +71,11 @@ exports.signUp = async (req, res) => {
 
     User.create(user)
       .then((data) => {
-        var data = { ...data, success: true };
-        res.send(data);
+        var success_data = { ...data, success: true };
         ExtendedUser.create({ id: data.dataValues.id })
-          .then((data) => {})
+          .then((data) => {
+            res.send(success_data);
+          })
           .catch((err) => {
             console.log(err);
           });
@@ -98,7 +99,6 @@ exports.signIn = async (req, res) => {
     return res.status(400).send({
       message: "Content can not be empty!",
     });
-    return;
   }
   console.log(req);
   User.findOne({
@@ -150,7 +150,6 @@ exports.getProfile = (req, res) => {
         message: "Bad token",
         success: false,
       });
-      return;
     }
   });
   if (token) {
@@ -187,7 +186,6 @@ exports.updateProfile = (req, res) => {
     return res.status(400).send({
       message: "Content can not be empty!",
     });
-    return;
   }
 
   var token = getToken(req.headers);
@@ -197,7 +195,6 @@ exports.updateProfile = (req, res) => {
         message: "Bad token",
         success: false,
       });
-      return;
     }
   });
 
@@ -244,7 +241,6 @@ exports.getExercise = (req, res) => {
         message: "Bad token",
         success: false,
       });
-      return;
     }
   });
 
@@ -255,19 +251,17 @@ exports.getExercise = (req, res) => {
           id: data.id,
           name: data.name,
           public: data.public,
-          sets: data.sets,
-          reps: data.reps,
-          rpe: data.rpe,
+          details: data.details,
           type: data.type,
           created_by: data.created_by,
         });
       })
       .catch((err) => {
+        console.log(err);
         return res.status(500).send({
           message: `Error getting exercise by id ${req.params.id}`,
           success: false,
         });
-        console.log(err);
       });
   } else {
     return res.status(403).send({ message: "Unauthorized.", success: false });
@@ -276,17 +270,7 @@ exports.getExercise = (req, res) => {
 
 //Create Exercise
 exports.createExercise = (req, res) => {
-  if (
-    req.body &&
-    Object.keys(req.body).length === 0 &&
-    Object.getPrototypeOf(req.body) === Object.prototype
-  ) {
-    return res.status(400).send({
-      message: "Content can not be empty!",
-    });
-    return;
-  }
-
+  var correct_keys = ["sets", "reps", "rpe"];
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
@@ -294,29 +278,71 @@ exports.createExercise = (req, res) => {
         message: "Bad token",
         success: false,
       });
-      return;
     }
   });
+
+  //Type checking and correct keys for details JSON
+  for (var i = 0; i < req.body.details; i++) {
+    for (const str of correct_keys) {
+      if (Object.keys(i).includes(str)) {
+        continue;
+      } else {
+        return res.status(400).send({
+          message: "There has been an error with your Object key.",
+        });
+      }
+    }
+
+    for (const key in i) {
+      if (Number.isInteger(i[key])) {
+        continue;
+      } else {
+        return res.status(400).send({
+          message: "There is a type error",
+        });
+      }
+    }
+  }
 
   if (token) {
     const id = jwt_decode(token).id;
     const exercise = {
       name: req.body.name,
       public: req.body.public,
-      sets: req.body.sets,
-      reps: req.body.reps,
-      rpe: req.body.rpe,
+      details: req.body.details,
       type: req.body.type,
       created_by: id,
     };
     Exercise.create(exercise)
       .then((data) => {
-        var data = { ...data, success: true };
-        res.send(data);
+        var success_data = { data: { data }, success: true };
+        ExtendedUser.update(
+          {
+            exercise_create: sequelize_function.fn(
+              "array_append",
+              sequelize_function.col("exercise_create"),
+              data.id
+            ),
+          },
+          {
+            where: { id: id },
+          }
+        )
+          .then((data) => {
+            res.send(success_data);
+          })
+          .catch((err) => {
+            console.log(err);
+            return res.status(500).send({
+              message: "There has been an error creating your exercise",
+              success: false,
+            });
+          });
       })
       .catch((err) => {
+        console.log(err);
         return res.status(500).send({
-          message: err,
+          message: "There has been an error creating your exercise",
           success: false,
         });
       });
@@ -327,6 +353,7 @@ exports.createExercise = (req, res) => {
 
 // Edit exercise
 exports.editExercise = (req, res) => {
+  var correct_keys = ["sets", "reps", "rpe"];
   if (
     req.body &&
     Object.keys(req.body).length === 0 &&
@@ -336,7 +363,6 @@ exports.editExercise = (req, res) => {
       message: "Content can not be empty!",
       success: false,
     });
-    return;
   }
 
   var token = getToken(req.headers);
@@ -346,17 +372,37 @@ exports.editExercise = (req, res) => {
         message: "Bad token",
         success: false,
       });
-      return;
     }
   });
+
+  //Type checking and correct keys for details JSON
+  for (var i = 0; i < req.body.details; i++) {
+    for (const str of correct_keys) {
+      if (Object.keys(i).includes(str)) {
+        continue;
+      } else {
+        return res.status(400).send({
+          message: "There has been an error with your Object key.",
+        });
+      }
+    }
+
+    for (const key in i) {
+      if (Number.isInteger(i[key])) {
+        continue;
+      } else {
+        return res.status(400).send({
+          message: "There is a type error",
+        });
+      }
+    }
+  }
 
   if (token) {
     const exercise = {
       name: req.body.name,
       public: req.body.public,
-      sets: req.body.sets,
-      reps: req.body.reps,
-      rpe: req.body.rpe,
+      details: req.body.details,
       type: req.body.type,
     };
     Exercise.update(exercise, {
@@ -397,7 +443,6 @@ exports.deleteExercise = (req, res) => {
         message: "Bad token",
         success: false,
       });
-      return;
     }
   });
 
@@ -412,10 +457,10 @@ exports.deleteExercise = (req, res) => {
           })
             .then((num) => {
               if (num === 1) {
-                res.send({
+                var success_message = {
                   message: "Exercise was deleted successfully",
                   success: true,
-                });
+                };
               } else {
                 return res.status(400).send({
                   message: "You did not create this exercise",
@@ -452,7 +497,6 @@ exports.getExerciseByUser = (req, res) => {
         message: "Bad token",
         success: false,
       });
-      return;
     }
   });
 
@@ -465,7 +509,7 @@ exports.getExerciseByUser = (req, res) => {
       },
     })
       .then((data) => {
-        var data = { data: [data], success: true };
+        var data = { data: { data }, success: true };
         res.send(data);
       })
       .catch((error) => {
@@ -487,7 +531,6 @@ exports.getFavoriteExercise = (req, res) => {
         message: "Bad token",
         success: false,
       });
-      return;
     }
   });
 
@@ -513,7 +556,7 @@ exports.getFavoriteExercise = (req, res) => {
   }
 };
 
-exports.createFavoriteExercise = (req, res) => {
+exports.favoriteExercise = (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
@@ -521,7 +564,6 @@ exports.createFavoriteExercise = (req, res) => {
         message: "Bad token",
         success: false,
       });
-      return;
     }
   });
 
@@ -534,39 +576,64 @@ exports.createFavoriteExercise = (req, res) => {
     })
       .then((data) => {
         var current_array = data[0].dataValues.exercise_favorite;
-        var exercise_array = [];
-        const index = current_array?.indexOf(req.params.id);
-        if (!current_array) {
-          exercise_array = [req.params.id];
-        } else if (index >= 0) {
-          return res.send({
-            message: "This cannot be favorited",
+        //If the return is NULL
+        if (current_array === null) {
+          ExtendedUser.update(
+            {
+              exercise_favorite: sequelize_function.fn(
+                "array_append",
+                sequelize_function.col("exercise_favorite"),
+                req.params.id
+              ),
+            },
+            {
+              where: { id: id },
+            }
+          )
+            .then((data) => {
+              res.send({ data: { data }, success: true });
+            })
+            .catch((err) => {
+              return res.status(400).send({
+                message: "There has been an error favoriting this exercise",
+                success: false,
+              });
+            });
+        }
+        //If the current array contains the id
+        else if (current_array.includes(req.params.id)) {
+          return res.status(400).send({
+            message: "You already favorited this exercise",
             success: false,
           });
         } else {
-          exercise_array = current_array.concat([req.params.id]);
-        }
-        ExtendedUser.update(
-          { exercise_favorite: exercise_array },
-          {
-            where: { id: id },
-          }
-        )
-          .then((data) => {
-            res.send({ data: { data }, success: true });
-          })
-          .catch((error) => {
-            console.log(error);
-            return res.status(400).send({
-              message: "There has been an error",
-              success: false,
+          ExtendedUser.update(
+            {
+              exercise_favorite: sequelize_function.fn(
+                "array_append",
+                sequelize_function.col("exercise_favorite"),
+                req.params.id
+              ),
+            },
+            {
+              where: { id: id },
+            }
+          )
+            .then((data) => {
+              res.send({ data: { data }, success: true });
+            })
+            .catch((err) => {
+              return res.status(400).send({
+                message: "There has been an error favoriting this exercise",
+                success: false,
+              });
             });
-          });
+        }
       })
-      .catch((error) => {
-        console.log(error);
+      .catch((err) => {
+        console.log(err);
         return res.status(400).send({
-          message: "User not recognized",
+          message: "There has been an error favoriting this exercise",
           success: false,
         });
       });
@@ -583,7 +650,6 @@ exports.unfavoriteExercise = (req, res) => {
         message: "Bad token",
         success: false,
       });
-      return;
     }
   });
 
@@ -596,45 +662,44 @@ exports.unfavoriteExercise = (req, res) => {
     })
       .then((data) => {
         var current_array = data[0].dataValues.exercise_favorite;
-        if (!current_array) {
+        if (current_array === null || !current_array.includes(req.params.id)) {
           return res.status(400).send({
-            message: "You cannot unfavorite this",
+            message: "You can't unfavorite this exercise",
             success: false,
           });
         } else {
-          const index = data[0].dataValues.exercise_favorite.indexOf(
-            req.params.id
-          );
-          if (index > -1) {
-            data[0].dataValues.exercise_favorite.splice(index, 1);
-            var exercise_array = data[0].dataValues.exercise_favorite;
-          } else {
-            return res.status(400).send({
-              message: "You cannot unfavorite this",
-              success: false,
+          ExtendedUser.update(
+            {
+              exercise_favorite: sequelize_function.fn(
+                "array_remove",
+                sequelize_function.col("exercise_favorite"),
+                req.params.id
+              ),
+            },
+            {
+              where: { id: id },
+            }
+          )
+            .then((data) => {
+              res.send({
+                data: { data },
+                success: true,
+              });
+            })
+            .catch((err) => {
+              console.log(err);
+              return res.status(400).send({
+                message:
+                  "There has been an error trying to unfavorite this exercise",
+                success: false,
+              });
             });
-          }
         }
-        ExtendedUser.update(
-          { exercise_favorite: exercise_array },
-          {
-            where: { id: id },
-          }
-        )
-          .then((data) => {
-            res.send({ data: { data }, success: true });
-          })
-          .catch((error) => {
-            return res.status(400).send({
-              message: error,
-              success: false,
-            });
-          });
       })
-      .catch((error) => {
-        console.log(error);
+      .catch((err) => {
+        console.log(err);
         return res.status(400).send({
-          message: "User not recognized",
+          message: "There has been an error trying to unfavorite this exercise",
           success: false,
         });
       });
@@ -642,6 +707,62 @@ exports.unfavoriteExercise = (req, res) => {
     return res.status(403).send({ message: "Unauthorized", success: false });
   }
 };
+
+exports.getWorkout = (req, res) => {
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      return res.status(400).send({
+        message: "Bad token",
+        success: false,
+      });
+    }
+  });
+  if (token) {
+    Workout.findByPk(req.params.id)
+      .then((data) => {
+        res.send({
+          id: data.id,
+          name: data.name,
+          exercise: data.exercise,
+          public: data.public,
+          created_by: data.created_by,
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        return res.status(500).send({
+          message: `Error getting workout by id ${req.params.id}`,
+          success: false,
+        });
+      });
+  } else {
+    return res.status(403).send({ message: "Unauthorized.", success: false });
+  }
+};
+
+exports.createWorkout = (req, res) => {
+  var correct_keys = ["sets", "reps", "rpe"];
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      return res.status(400).send({
+        message: "Bad token",
+        success: false,
+      });
+    }
+  });
+
+  if(token) {
+
+  }
+};
+exports.editWorkout = (req, res) => {};
+exports.deleteWorkout = (req, res) => {};
+exports.getWorkoutByUser = (req, res) => {};
+exports.getFavoriteWorkout = (req, res) => {};
+exports.favoriteWorkout = (req, res) => {};
+exports.unfavoriteWorkout = (req, res) => {};
 
 // Test API Endpoint
 exports.test = (req, res) => {
@@ -652,7 +773,6 @@ exports.test = (req, res) => {
         message: "Bad token",
         success: false,
       });
-      return;
     }
   });
   if (token) {

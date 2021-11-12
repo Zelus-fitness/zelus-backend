@@ -95,3 +95,5 @@ docker-compose.yml
 
 selfsigned.crt 
 selfsigned.key
+
+testing.js

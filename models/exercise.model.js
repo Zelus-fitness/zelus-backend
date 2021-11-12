@@ -16,14 +16,9 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.BOOLEAN,
         allowNull: false,
       },
-      sets: {
-        type: Sequelize.INTEGER,
-      },
-      reps: {
-        type: Sequelize.INTEGER,
-      },
-      rpe: {
-        type: Sequelize.INTEGER,
+      details: {
+        type: Sequelize.JSONB,
+        allowNull: false,
       },
       created_by: {
         type: Sequelize.STRING,
