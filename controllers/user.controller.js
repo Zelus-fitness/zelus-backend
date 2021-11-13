@@ -9,6 +9,8 @@ const bcrypt = require("bcrypt");
 const passport = require("passport");
 const jwt = require("jsonwebtoken");
 const jwt_decode = require("jwt-decode");
+const { v4: uuidv4 } = require("uuid");
+const { sequelize } = require("../models");
 
 require("../config/passport")(passport);
 
@@ -459,9 +461,32 @@ exports.deleteExercise = (req, res) => {
                   message: "Exercise was deleted successfully",
                   success: true,
                 };
+                ExtendedUser.update(
+                  {
+                    exercise_create: sequelize_function.fn(
+                      "array_remove",
+                      sequelize_function.col("exercise_create"),
+                      exercise_id
+                    ),
+                  },
+                  {
+                    where: { id: token_user_id },
+                  }
+                )
+                  .then((data) => {
+                    res.send(success_message);
+                  })
+                  .catch((err) => {
+                    console.log(err);
+                    return res.status(400).send({
+                      message:
+                        "There has been an error trying to delete this exercise",
+                      success: false,
+                    });
+                  });
               } else {
                 return res.status(400).send({
-                  message: "You did not create this exercise",
+                  message: "There has been a problem",
                   success: false,
                 });
               }
@@ -540,8 +565,25 @@ exports.getFavoriteExercise = (req, res) => {
       },
     })
       .then((data) => {
-        var data_object = { data: { data }, success: true };
-        res.send(data_object);
+        var current_array = data[0].dataValues.exercise_favorite;
+        Exercise.findAll({
+          raw: true,
+          nest: true,
+          where: { id: current_array },
+        })
+          .then((result) => {
+            res.send(result);
+          })
+          .catch((err) => {
+            console.log(err);
+            return res.status(400).send({
+              success: false,
+              message:
+                "There has been an error trying to get your favorite exercises",
+            });
+          });
+        // var data_object = { data: { data }, success: true };
+        // res.send(data_object);
       })
       .catch((error) => {
         return res.status(400).send({
@@ -803,76 +845,59 @@ exports.createWorkout = (req, res) => {
       }
     }
 
-    //Create exercises within Workouts
-    // var exercises_id_array = [];
-
     var exercises_id_array = [];
-    for (exercise_obj of workout_obj["exercise"]) {
-      var exercise = {
-        name: exercise_obj["name"],
-        type: exercise_obj["type"],
-        details: exercise_obj["details"],
-        created_by: id,
-      };
-      Exercise.create(exercise)
-        .then((data) => {
-          ExtendedUser.update(
-            {
-              exercise_create: sequelize_function.fn(
-                "array_append",
-                sequelize_function.col("exercise_create"),
-                data.id
-              ),
-            },
-            {
-              where: { id: id },
-            }
-          )
-            .then((update_data) => {
-              exercises_id_array.push(data.id);
-              console.log(exercises_id_array);
-            })
-            .catch((err) => {
-              console.log(err);
-              return res.status(500).send({
-                message: "There has been an error creating your workout",
-                success: false,
-              });
-            });
-        })
-        .catch((err) => {
-          console.log(err);
-          return res.status(500).send({
-            message: "There has been an error creating your workout",
-            success: false,
-          });
-        });
-    }
+    var query = ``;
+    var exercise_obj = workout_obj["exercise"];
+    exercise_obj.forEach((element) => {
+      element["id"] = uuidv4();
+      exercises_id_array.push(element["id"]);
+      (query += `INSERT INTO exercises(id,name,details,created_by,type) VALUES ('${
+        element["id"]
+      }', '${element["name"]}','${JSON.stringify(
+        element["details"]
+      )}','${id}','${element["type"]}'); `),
+        {
+          logging: console.log,
+        };
+      console.log(element["details"]);
+    });
 
-    console.log(resolve_data);
-    var workout = {
-      name: workout_obj["name"],
-      public: workout_obj["public"],
-      created_by: workout_obj["created_by"],
-      exercise: resolve_data,
-    };
-    Workout.create(workout)
-      .then((data) => {
-        var success_data = { data: { data }, success: true };
-        ExtendedUser.update(
-          {
-            workout_create: sequelize_function.fn(
-              "array_append",
-              sequelize_function.col("workout_create"),
-              data.id
-            ),
-          },
-          {
-            where: { id: id },
-          }
-        )
+    console.log(exercises_id_array);
+
+    sequelize_function
+      .query(query)
+      .then((result) => {
+        var workout = {
+          name: workout_obj["name"],
+          public: workout_obj["public"],
+          created_by: id,
+          exercise: exercises_id_array,
+        };
+        Workout.create(workout)
           .then((data) => {
-            res.send(success_data);
+            var success_data = { data: { data }, success: true };
+            ExtendedUser.update(
+              {
+                workout_create: sequelize_function.fn(
+                  "array_append",
+                  sequelize_function.col("workout_create"),
+                  data.id
+                ),
+              },
+              {
+                where: { id: id },
+              }
+            )
+              .then((data) => {
+                res.send(success_data);
+              })
+              .catch((err) => {
+                console.log(err);
+                return res.status(500).send({
+                  message: "There has been an error creating your workout",
+                  success: false,
+                });
+              });
           })
           .catch((err) => {
             console.log(err);
@@ -889,16 +914,358 @@ exports.createWorkout = (req, res) => {
           success: false,
         });
       });
+
+    exercises_id_array.forEach((exercise_id) => {
+      ExtendedUser.update(
+        {
+          exercise_create: sequelize_function.fn(
+            "array_append",
+            sequelize_function.col("exercise_create"),
+            exercise_id
+          ),
+        },
+        {
+          where: { id: id },
+        }
+      ).catch((err) => {
+        console.log(err);
+        return res.status(500).send({
+          message: "There has been an error creating your workout",
+          success: false,
+        });
+      });
+    });
   } else {
     return res.status(403).send({ message: "Unauthorized.", success: false });
   }
 };
 exports.editWorkout = (req, res) => {};
-exports.deleteWorkout = (req, res) => {};
-exports.getWorkoutByUser = (req, res) => {};
-exports.getFavoriteWorkout = (req, res) => {};
-exports.favoriteWorkout = (req, res) => {};
-exports.unfavoriteWorkout = (req, res) => {};
+
+exports.deleteWorkout = (req, res) => {
+  const workout_id = req.params.id;
+
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      return res.status(400).send({
+        message: "Bad token",
+        success: false,
+      });
+    }
+  });
+
+  var exercises_to_delete = [];
+  if (token) {
+    const token_user_id = jwt_decode(token).id;
+    Workout.findByPk(workout_id)
+      .then((data) => {
+        var workout_created_by = data.created_by;
+        exercises_to_delete = data.exercise;
+        if (workout_created_by === token_user_id) {
+          Workout.destroy({
+            where: { id: workout_id },
+          })
+            .then((num) => {
+              if (num === 1) {
+                var success_message = {
+                  message: "Workout was deleted successfully",
+                  success: true,
+                };
+                Exercise.destroy({ where: { id: exercises_to_delete } })
+                  .then((data) => {
+                    res.send(success_message);
+                  })
+                  .catch((err) => {
+                    console.log(err);
+                    return res.status(400).send({
+                      message:
+                        "There has been an error trying to delete this workout",
+                      success: false,
+                    });
+                  });
+              } else {
+                return res.status(400).send({
+                  message: "You did not create this workout",
+                  success: false,
+                });
+              }
+            })
+            .catch((err) => {
+              console.log(err);
+              return res.status(500).send({
+                message: `Could not delete Exercise ${exercise_id}`,
+                success: false,
+              });
+            });
+        }
+      })
+      .catch((err) => {
+        return res.status(500).send({
+          message: err,
+          success: false,
+        });
+      });
+
+    ExtendedUser.update(
+      {
+        workout_create: sequelize_function.fn(
+          "array_remove",
+          sequelize_function.col("workout_create"),
+          workout_id
+        ),
+      },
+      {
+        where: { id: token_user_id },
+      }
+    )
+      .then((data) => {
+        exercises_to_delete.forEach((exercise_id) => {
+          ExtendedUser.update(
+            {
+              exercise_create: sequelize_function.fn(
+                "array_remove",
+                sequelize_function.col("exercise_create"),
+                exercise_id
+              ),
+            },
+            {
+              where: { id: token_user_id },
+            }
+          ).catch((err) => {
+            console.log(err);
+            return res.status(400).send({
+              message: "There has been an error trying to delete this workout",
+              success: false,
+            });
+          });
+        });
+      })
+      .catch((err) => {
+        console.log(err);
+        return res.status(400).send({
+          message: "There has been an error trying to delete this workout",
+          success: false,
+        });
+      });
+  } else {
+    return res.status(403).send({ message: "Unauthorized", success: false });
+  }
+};
+
+exports.getWorkoutByUser = (req, res) => {
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      return res.status(400).send({
+        message: "Bad token",
+        success: false,
+      });
+    }
+  });
+
+  if (token) {
+    const id = jwt_decode(token).id;
+    sequelize_function
+      .query(
+        `SELECT * FROM exercises WHERE id IN(SELECT UNNEST("exercise") FROM workouts WHERE created_by = '${id}');`,
+        {
+          raw: true,
+        }
+      )
+      .then((data) => {
+        res.send(data[0]);
+      })
+      .catch((err) => {
+        console.log(err);
+        return res.status(500).send({
+          message: `Error getting workout`,
+          success: false,
+        });
+      });
+  }
+};
+
+exports.getFavoriteWorkout = (req, res) => {
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      return res.status(400).send({
+        message: "Bad token",
+        success: false,
+      });
+    }
+  });
+
+  if (token) {
+    const id = jwt_decode(token).id;
+    ExtendedUser.findAll({
+      raw: true,
+      where: {
+        id: id,
+      },
+    })
+      .then((data) => {
+        var current_array = data[0].workout_favorite;
+        Workout.findAll({
+          raw: true,
+          nest: true,
+          where: { id: current_array },
+        }).then((result) => {
+          res.send(result);
+        });
+      })
+      .catch((error) => {
+        return res.status(400).send({
+          message: "User not recognized",
+          success: false,
+        });
+      });
+  }
+};
+exports.favoriteWorkout = (req, res) => {
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      return res.status(400).send({
+        message: "Bad token",
+        success: false,
+      });
+    }
+  });
+
+  if (token) {
+    const id = jwt_decode(token).id;
+    ExtendedUser.findAll({
+      raw: true,
+      where: {
+        id: id,
+      },
+    })
+      .then((data) => {
+        var current_array = data[0].workout_favorite;
+        if (current_array === null) {
+          ExtendedUser.update(
+            {
+              workout_favorite: sequelize_function.fn(
+                "array_append",
+                sequelize_function.col("workout_favorite"),
+                req.params.id
+              ),
+            },
+            { where: { id: id } }
+          )
+            .then((data) => {
+              res.send({ data: { data }, success: true });
+            })
+            .catch((err) => {
+              return res.status(400).send({
+                message: "There has been an error favoriting this workout",
+                success: false,
+              });
+            });
+        } else if (current_array.includes(req.params.id)) {
+          return res.status(400).send({
+            message: "You already favorited this workout",
+            success: false,
+          });
+        } else {
+          ExtendedUser.update(
+            {
+              workout_favorite: sequelize_function.fn(
+                "array_append",
+                sequelize_function.col("workout_favorite"),
+                req.params.id
+              ),
+            },
+            {
+              where: { id: id },
+            }
+          )
+            .then((data) => {
+              res.send({ data: { data }, success: true });
+            })
+            .catch((err) => {
+              return res.status(400).send({
+                message: "There has been an error favoriting this workout",
+                success: false,
+              });
+            });
+        }
+      })
+      .catch((err) => {
+        res.status(500).send({
+          message: "There has been a problem favoriting this workout",
+          success: false,
+        });
+      });
+  }
+};
+exports.unfavoriteWorkout = (req, res) => {
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      return res.status(400).send({
+        message: "Bad token",
+        success: false,
+      });
+    }
+  });
+
+  if (token) {
+    const id = jwt_decode(token).id;
+    ExtendedUser.findAll({
+      raw: true,
+      where: {
+        id: id,
+      },
+    })
+      .then((data) => {
+        var current_array = data[0].workout_favorite;
+        if (current_array === null || !current_array.includes(req.params.id)) {
+          return res.status(400).send({
+            message: "You can't unfavorite this workout",
+            success: false,
+          });
+        } else {
+          ExtendedUser.update(
+            {
+              workout_favorite: sequelize_function.fn(
+                "array_remove",
+                sequelize_function.col("workout_favorite"),
+                req.params.id
+              ),
+            },
+            {
+              where: { id: id },
+            }
+          )
+            .then((data) => {
+              res.send({
+                data: { data },
+                success: true,
+              });
+            })
+            .catch((err) => {
+              console.log(err);
+              return res.status(400).send({
+                message:
+                  "There has been an error trying to unfavorite this exercise",
+                success: false,
+              });
+            });
+        }
+      })
+      .catch((err) => {
+        console.log(err);
+        return res.status(400).send({
+          message: "There has been an error trying to unfavorite this exercise",
+          success: false,
+        });
+      });
+  } else {
+    return res.status(403).send({ message: "Unauthorized", success: false });
+  }
+};
 
 // Test API Endpoint
 exports.test = (req, res) => {

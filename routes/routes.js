@@ -58,7 +58,7 @@ module.exports = (app) => {
   router.get("/user/workout/", users.getWorkoutByUser);
 
   // Gets which workout were favorited based on user ID
-  router.get("/favoriteworkout", users.getFavoriteWorkout);
+  router.get("/getfavoriteworkout", users.getFavoriteWorkout);
 
   // Favorites an workout, ":id" in the url is workout ID
   router.post("/favoriteworkout/:id", users.favoriteWorkout);
