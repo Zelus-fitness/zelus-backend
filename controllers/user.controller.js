@@ -10,7 +10,6 @@ const passport = require("passport");
 const jwt = require("jsonwebtoken");
 const jwt_decode = require("jwt-decode");
 const { v4: uuidv4 } = require("uuid");
-const { sequelize } = require("../models");
 
 require("../config/passport")(passport);
 
@@ -102,7 +101,7 @@ exports.signIn = async (req, res) => {
       message: "Content can not be empty!",
     });
   }
-  console.log(req);
+
   User.findOne({
     where: {
       email_address: req.body.email_address.toLowerCase(),
@@ -167,11 +166,11 @@ exports.getProfile = (req, res) => {
         });
       })
       .catch((err) => {
+        console.log(err);
         return res.status(500).send({
           message: "Error restrieving User with id=" + id,
           success: false,
         });
-        console.log(err);
       });
   } else {
     return res.status(403).send({ message: "Unauthorized.", success: false });
@@ -224,11 +223,11 @@ exports.updateProfile = (req, res) => {
         }
       })
       .catch((err) => {
+        console.log(err);
         return res.status(500).send({
           message: "Error updating User with id=" + id,
           success: false,
         });
-        console.log(err);
       });
   } else {
     return res.status(403).send({ message: "Unauthorized.", success: false });
@@ -422,11 +421,11 @@ exports.editExercise = (req, res) => {
         }
       })
       .catch((err) => {
+        console.log(err);
         return res.status(500).send({
           message: "Error updating Excerise with id=" + id,
           success: false,
         });
-        console.log(err);
       });
   } else {
     return res.status(403).send({ message: "Unauthorized.", success: false });
@@ -536,6 +535,7 @@ exports.getExerciseByUser = (req, res) => {
         res.send(data);
       })
       .catch((error) => {
+        console.log(error)
         return res.status(400).send({
           message: "User not recognized",
           success: false,
@@ -586,6 +586,7 @@ exports.getFavoriteExercise = (req, res) => {
         // res.send(data_object);
       })
       .catch((error) => {
+        console.log(error)
         return res.status(400).send({
           message: "User not recognized",
           success: false,
@@ -634,6 +635,7 @@ exports.favoriteExercise = (req, res) => {
               res.send({ data: { data }, success: true });
             })
             .catch((err) => {
+              console.log(err)
               return res.status(400).send({
                 message: "There has been an error favoriting this exercise",
                 success: false,
@@ -663,6 +665,7 @@ exports.favoriteExercise = (req, res) => {
               res.send({ data: { data }, success: true });
             })
             .catch((err) => {
+              console.log(err)
               return res.status(400).send({
                 message: "There has been an error favoriting this exercise",
                 success: false,
@@ -748,7 +751,7 @@ exports.unfavoriteExercise = (req, res) => {
   }
 };
 
-exports.getWorkout = (req, res) => {
+exports.getWorkout = async (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
@@ -759,22 +762,16 @@ exports.getWorkout = (req, res) => {
     }
   });
   if (token) {
-    Workout.findByPk(req.params.id)
-      .then((data) => {
-        res.send({
-          id: data.id,
-          name: data.name,
-          exercise: data.exercise,
-          created_by: data.created_by,
-        });
-      })
-      .catch((err) => {
-        console.log(err);
-        return res.status(500).send({
-          message: `Error getting workout by id ${req.params.id}`,
-          success: false,
-        });
-      });
+    var workout_data = await Workout.findByPk(req.params.id, { raw: true });
+    var return_data = workout_data;
+    var exercise_data = await Exercise.findAll({
+      raw: true,
+      nest: true,
+      where: { id: return_data["exercise"] },
+    });
+    return_data["exercise"] = exercise_data;
+
+    res.send(return_data);
   } else {
     return res.status(403).send({ message: "Unauthorized.", success: false });
   }
@@ -851,18 +848,12 @@ exports.createWorkout = (req, res) => {
     exercise_obj.forEach((element) => {
       element["id"] = uuidv4();
       exercises_id_array.push(element["id"]);
-      (query += `INSERT INTO exercises(id,name,details,created_by,type) VALUES ('${
+      query += `INSERT INTO exercises(id,name,details,created_by,type) VALUES ('${
         element["id"]
       }', '${element["name"]}','${JSON.stringify(
         element["details"]
-      )}','${id}','${element["type"]}'); `),
-        {
-          logging: console.log,
-        };
-      console.log(element["details"]);
+      )}','${id}','${element["type"]}'); `;
     });
-
-    console.log(exercises_id_array);
 
     sequelize_function
       .query(query)
@@ -939,7 +930,9 @@ exports.createWorkout = (req, res) => {
     return res.status(403).send({ message: "Unauthorized.", success: false });
   }
 };
-exports.editWorkout = (req, res) => {};
+exports.editWorkout = (req, res) => {
+  
+};
 
 exports.deleteWorkout = (req, res) => {
   const workout_id = req.params.id;
@@ -1052,7 +1045,7 @@ exports.deleteWorkout = (req, res) => {
   }
 };
 
-exports.getWorkoutByUser = (req, res) => {
+exports.getWorkoutByUser = async (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
@@ -1065,23 +1058,28 @@ exports.getWorkoutByUser = (req, res) => {
 
   if (token) {
     const id = jwt_decode(token).id;
-    sequelize_function
-      .query(
-        `SELECT * FROM exercises WHERE id IN(SELECT UNNEST("exercise") FROM workouts WHERE created_by = '${id}');`,
-        {
-          raw: true,
-        }
-      )
-      .then((data) => {
-        res.send(data[0]);
-      })
-      .catch((err) => {
-        console.log(err);
-        return res.status(500).send({
-          message: `Error getting workout`,
-          success: false,
-        });
+
+    var workout_data = await Workout.findAll({
+      raw: true,
+      nest: true,
+      where: {
+        created_by: id,
+      },
+    });
+
+    var return_data = workout_data;
+    for (var i = 0; i < return_data.length; i++) {
+      var exercise_data = await Exercise.findAll({
+        raw: true,
+        nest: true,
+        where: { id: return_data[i]["exercise"] },
       });
+      return_data[i]["exercise"] = exercise_data;
+    }
+
+    res.send(return_data);
+  } else {
+    return res.status(403).send({ message: "Unauthorized", success: false });
   }
 };
 
@@ -1115,13 +1113,17 @@ exports.getFavoriteWorkout = (req, res) => {
         });
       })
       .catch((error) => {
+        console.log(error);
         return res.status(400).send({
           message: "User not recognized",
           success: false,
         });
       });
+  } else {
+    return res.status(403).send({ message: "Unauthorized", success: false });
   }
 };
+
 exports.favoriteWorkout = (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
@@ -1158,6 +1160,7 @@ exports.favoriteWorkout = (req, res) => {
               res.send({ data: { data }, success: true });
             })
             .catch((err) => {
+              console.log(err);
               return res.status(400).send({
                 message: "There has been an error favoriting this workout",
                 success: false,
@@ -1185,6 +1188,7 @@ exports.favoriteWorkout = (req, res) => {
               res.send({ data: { data }, success: true });
             })
             .catch((err) => {
+              console.log(err)
               return res.status(400).send({
                 message: "There has been an error favoriting this workout",
                 success: false,
@@ -1193,13 +1197,17 @@ exports.favoriteWorkout = (req, res) => {
         }
       })
       .catch((err) => {
+        console.log(err)
         res.status(500).send({
           message: "There has been a problem favoriting this workout",
           success: false,
         });
       });
+  } else {
+    return res.status(403).send({ message: "Unauthorized", success: false });
   }
 };
+
 exports.unfavoriteWorkout = (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
