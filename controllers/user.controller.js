@@ -408,7 +408,7 @@ exports.editExercise = (req, res) => {
       where: { id: req.params.id },
     })
       .then((num) => {
-        if (num == 1) {
+        if (num === 1) {
           res.send({
             message: "Exercise was updated successfully",
             success: true,
@@ -535,7 +535,7 @@ exports.getExerciseByUser = (req, res) => {
         res.send(data);
       })
       .catch((error) => {
-        console.log(error)
+        console.log(error);
         return res.status(400).send({
           message: "User not recognized",
           success: false,
@@ -586,7 +586,7 @@ exports.getFavoriteExercise = (req, res) => {
         // res.send(data_object);
       })
       .catch((error) => {
-        console.log(error)
+        console.log(error);
         return res.status(400).send({
           message: "User not recognized",
           success: false,
@@ -635,7 +635,7 @@ exports.favoriteExercise = (req, res) => {
               res.send({ data: { data }, success: true });
             })
             .catch((err) => {
-              console.log(err)
+              console.log(err);
               return res.status(400).send({
                 message: "There has been an error favoriting this exercise",
                 success: false,
@@ -665,7 +665,7 @@ exports.favoriteExercise = (req, res) => {
               res.send({ data: { data }, success: true });
             })
             .catch((err) => {
-              console.log(err)
+              console.log(err);
               return res.status(400).send({
                 message: "There has been an error favoriting this exercise",
                 success: false,
@@ -930,8 +930,138 @@ exports.createWorkout = (req, res) => {
     return res.status(403).send({ message: "Unauthorized.", success: false });
   }
 };
-exports.editWorkout = (req, res) => {
-  
+exports.editWorkout = async (req, res) => {
+  var correct_keys_workout = ["name", "created_by", "exercise", "public"];
+  var correct_keys_exercises = ["name", "type", "type"];
+  var correct_keys_details = ["sets", "reps", "rpe"];
+
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      return res.status(400).send({
+        message: "Bad token",
+        success: false,
+      });
+    }
+  });
+
+  //Object checking
+  if (token) {
+    const id = jwt_decode(token).id;
+    var workout_obj = req.body.workout;
+
+    //Check Workout Object
+    var hasAllKeysWorkout = correct_keys_workout.every((item) =>
+      workout_obj.hasOwnProperty(item)
+    );
+
+    if (!hasAllKeysWorkout) {
+      return res.status(400).send({
+        message: "There has been an error with your Object key.",
+      });
+    }
+
+    //Check Exercise Object
+    for (exercise_object of workout_obj["exercise"]) {
+      var hasAllKeysExercise = correct_keys_exercises.every((item) =>
+        exercise_object.hasOwnProperty(item)
+      );
+      if (!hasAllKeysExercise) {
+        return res.status(400).send({
+          message: "There has been an error with your Object key.",
+        });
+      }
+
+      //Check Details Object
+      for (detail_object of exercise_object["details"]) {
+        var hasAllKeysDetail = correct_keys_details.every((item) =>
+          detail_object.hasOwnProperty(item)
+        );
+        if (!hasAllKeysDetail) {
+          return res.status(400).send({
+            message: "There has been an error with your Object key.",
+          });
+        }
+        //Type checking for details object
+        for (key in detail_object) {
+          if (
+            typeof detail_object[key] != "number" ||
+            detail_object[key] % 1 != 0
+          ) {
+            return res.status(400).send({
+              message: "There is a type error",
+            });
+          }
+        }
+      }
+    }
+
+    var exercise_obj = workout_obj["exercise"];
+    try {
+      for (var i = 0; i < exercise_obj.length; i++) {
+        if (!("id" in exercise_obj[i])) {
+          var temp_exercise_object = {
+            name: exercise_obj[i]["name"],
+            details: exercise_obj[i]["details"],
+            type: exercise_obj[i]["type"],
+            created_by: id,
+          };
+
+          var exercise_return_data = await Exercise.create(
+            temp_exercise_object
+          );
+
+          var extended_user_data = await ExtendedUser.update(
+            {
+              exercise_create: sequelize_function.fn(
+                "array_append",
+                sequelize_function.col("exercise_create"),
+                exercise_return_data["id"]
+              ),
+            },
+            {
+              where: { id: id },
+            }
+          );
+        } else if ("id" in exercise_obj[i]) {
+          var temp_exercise = {
+            name: exercise_obj[i]["name"],
+            details: exercise_obj[i]["details"],
+            type: exercise_obj[i]["type"],
+          };
+
+          var exercise_update = await Exercise.update(exercise, {
+            where: { id: req.params.id },
+          });
+        }
+      }
+
+      var temp_workout = {
+        name: workout_obj["name"],
+        public: workout_obj["public"],
+      };
+      var workout_update = await Workout.update(temp_workout, {
+        where: { id: req.params.id },
+      });
+
+      if (workout_update === 1) {
+        res.send({
+          message: "Workout was updated successfully",
+          success: true,
+        });
+      } else {
+        res.send(400).send({
+          message: `Cannot update Workout`,
+          success: false,
+        });
+      }
+    } catch (err) {
+      console.log(err);
+      return res.status(400).send({
+        message: "There has been an error editing your workout",
+      });
+    }
+  }
 };
 
 exports.deleteWorkout = (req, res) => {
@@ -1188,7 +1318,7 @@ exports.favoriteWorkout = (req, res) => {
               res.send({ data: { data }, success: true });
             })
             .catch((err) => {
-              console.log(err)
+              console.log(err);
               return res.status(400).send({
                 message: "There has been an error favoriting this workout",
                 success: false,
@@ -1197,7 +1327,7 @@ exports.favoriteWorkout = (req, res) => {
         }
       })
       .catch((err) => {
-        console.log(err)
+        console.log(err);
         res.status(500).send({
           message: "There has been a problem favoriting this workout",
           success: false,
