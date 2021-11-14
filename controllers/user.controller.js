@@ -863,6 +863,7 @@ exports.createWorkout = (req, res) => {
           public: workout_obj["public"],
           created_by: id,
           exercise: exercises_id_array,
+          time: workout_obj["time"],
         };
         Workout.create(workout)
           .then((data) => {
@@ -1030,8 +1031,8 @@ exports.editWorkout = async (req, res) => {
             type: exercise_obj[i]["type"],
           };
 
-          var exercise_update = await Exercise.update(exercise, {
-            where: { id: req.params.id },
+          var exercise_update = await Exercise.update(temp_exercise, {
+            where: { id: exercise_obj[i]["id"] },
           });
         }
       }
@@ -1044,12 +1045,12 @@ exports.editWorkout = async (req, res) => {
         where: { id: req.params.id },
       });
 
-      if (workout_update === 1) {
+      if (workout_update[0] === 1) {
         res.send({
           message: "Workout was updated successfully",
           success: true,
         });
-      } else {
+      } else if (workout_update[0] === 0) {
         res.send(400).send({
           message: `Cannot update Workout`,
           success: false,
@@ -1070,6 +1071,7 @@ exports.deleteWorkout = (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
+      console.log(err);
       return res.status(400).send({
         message: "Bad token",
         success: false,

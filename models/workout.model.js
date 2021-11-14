@@ -18,6 +18,9 @@ module.exports = (sequelize, Sequelize) => {
       public:{
         type: Sequelize.BOOLEAN
       },
+      time:{
+        type: Sequelize.BIGINT
+      },
       created_by:{
         type: Sequelize.STRING
       }

@@ -42,7 +42,7 @@ module.exports = (app) => {
   // Unfavorites Exercise, :id url is exercise url
   router.post("/unfavoriteexercise/:id", users.unfavoriteExercise);
 
-  //Return one workout by id
+  //Return one workout by Workout id
   router.get("/workout/:id", users.getWorkout);
 
   // Create workout
