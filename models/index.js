@@ -9,8 +9,8 @@ const sequelize = new Sequelize(dbConfig.DB, dbConfig.USER, dbConfig.PASSWORD, {
   dialect: dbConfig.dialect,
   dialectOptions: {
     ssl: {
-      require: true, 
-      rejectUnauthorized: false 
+      require: true,
+      rejectUnauthorized: false
     }
   },
   pool: {

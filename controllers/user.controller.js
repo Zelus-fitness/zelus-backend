@@ -778,9 +778,9 @@ exports.getWorkout = async (req, res) => {
 };
 
 exports.createWorkout = (req, res) => {
-  var correct_keys_workout = ["name", "created_by", "exercise", "public"];
-  var correct_keys_exercises = ["name", "type", "type"];
-  var correct_keys_details = ["sets", "reps", "rpe"];
+  var correct_keys_workout = ["name", "exercise", "public", "time", "notes"];
+  var correct_keys_exercises = ["type", "details", "category"];
+  var correct_keys_details = ["set", "reps", "lbs"];
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
@@ -795,7 +795,6 @@ exports.createWorkout = (req, res) => {
   if (token) {
     const id = jwt_decode(token).id;
     var workout_obj = req.body.workout;
-
     //Check Workout Object
     var hasAllKeysWorkout = correct_keys_workout.every((item) =>
       workout_obj.hasOwnProperty(item)
@@ -848,11 +847,11 @@ exports.createWorkout = (req, res) => {
     exercise_obj.forEach((element) => {
       element["id"] = uuidv4();
       exercises_id_array.push(element["id"]);
-      query += `INSERT INTO exercises(id,name,details,created_by,type) VALUES ('${
+      query += `INSERT INTO exercises(id,details,created_by,type,category) VALUES ('${
         element["id"]
-      }', '${element["name"]}','${JSON.stringify(
-        element["details"]
-      )}','${id}','${element["type"]}'); `;
+      }','${JSON.stringify(element["details"])}','${id}','${
+        element["type"]
+      }', '${element["category"]}'); `;
     });
 
     sequelize_function
@@ -864,6 +863,7 @@ exports.createWorkout = (req, res) => {
           created_by: id,
           exercise: exercises_id_array,
           time: workout_obj["time"],
+          notes: workout_obj["notes"],
         };
         Workout.create(workout)
           .then((data) => {
@@ -932,9 +932,9 @@ exports.createWorkout = (req, res) => {
   }
 };
 exports.editWorkout = async (req, res) => {
-  var correct_keys_workout = ["name", "created_by", "exercise", "public"];
-  var correct_keys_exercises = ["name", "type", "type"];
-  var correct_keys_details = ["sets", "reps", "rpe"];
+  var correct_keys_workout = ["name", "exercise", "public", "time", "notes"];
+  var correct_keys_exercises = ["type", "details", "category"];
+  var correct_keys_details = ["set", "reps", "lbs"];
 
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
