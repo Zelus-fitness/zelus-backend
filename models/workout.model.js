@@ -21,6 +21,9 @@ module.exports = (sequelize, Sequelize) => {
       time:{
         type: Sequelize.BIGINT
       },
+      notes: {
+
+      },
       created_by:{
         type: Sequelize.STRING
       }
