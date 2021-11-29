@@ -25,9 +25,9 @@ db.sequelize.sync();
 
 // Uncomment this code if changed any of the table schemas
 // This will delete all of your data and reinitialize your tables
-// db.sequelize.sync({force:true}).then(()=>{
-//   console.log("Drop and resync the DB")
-// })
+db.sequelize.sync({force:true}).then(()=>{
+  console.log("Drop and resync the DB")
+})
 
 app.get("/", (req, res) => {
   res.json({ message: "Hello!" });
