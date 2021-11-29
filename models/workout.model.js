@@ -22,7 +22,7 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.BIGINT
       },
       notes: {
-
+        type: Sequelize.STRING,
       },
       created_by:{
         type: Sequelize.STRING
