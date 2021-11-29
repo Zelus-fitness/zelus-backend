@@ -24,6 +24,10 @@ module.exports = (sequelize, Sequelize) => {
         type: Sequelize.STRING,
         allowNull: false,
       },
+      category: {
+        type: Sequelize.STRING,
+        allowNull: false,
+      },
     },
     { timestamps: false }
   );
