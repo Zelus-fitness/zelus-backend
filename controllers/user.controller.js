@@ -234,6 +234,42 @@ exports.updateProfile = (req, res) => {
   }
 };
 
+exports.updateExtendedProfile = (req, res) => {
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      return res.status(400).send({
+        message: "Bad token",
+        success: false,
+      });
+    }
+  });
+
+  if (token) {
+    var extendeduser = {
+      height: req.body.height, //String
+      weight: req.body.weight, //Number
+      imperial: req.body.imperial, //bool, true = imperial, false = metric
+      age: req.body.age, //Number
+    };
+    ExtendedUser.update(extendeduser, {
+      where: { id: req.params.id },
+    })
+      .then((data) => {
+        return res.send({ data: { data }, success: true });
+      })
+      .catch((err) => {
+        confirm.log(err);
+        res.status(400).send({
+          message: "There has been an error updating your user profile",
+          success: false,
+        });
+      });
+  } else {
+    return res.status(403).send({ message: "Unauthorized.", success: false });
+  }
+};
+
 exports.getExercise = (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
