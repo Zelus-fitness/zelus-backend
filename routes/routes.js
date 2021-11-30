@@ -19,6 +19,9 @@ module.exports = (app) => {
   router.put("/profile", users.updateProfile);
 
   // Create new extended information for new users
+  router.get("/extendedprofile", users.getExtendedProfile)
+
+  // Create new extended information for new users
   router.put("/extendedprofile", users.updateExtendedProfile)
 
   //Return one exercise by id

@@ -234,6 +234,36 @@ exports.updateProfile = (req, res) => {
   }
 };
 
+exports.getExtendedProfile = (req, res) => {
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      return res.status(400).send({
+        message: "Bad token",
+        success: false,
+      });
+    }
+  });
+
+  if (token) {
+    const id = jwt_decode(token).id;
+
+    ExtendedUser.findByPk(id)
+      .then((data) => {
+        res.send({ data: { data }, success: true });
+      })
+      .catch((err) => {
+        console.log(err);
+        res.status(400).send({
+          message: "There has been an error getting your user profile",
+          success: false,
+        });
+      });
+  } else {
+    return res.status(403).send({ message: "Unauthorized.", success: false });
+  }
+};
+
 exports.updateExtendedProfile = (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
@@ -246,6 +276,7 @@ exports.updateExtendedProfile = (req, res) => {
   });
 
   if (token) {
+    const id = jwt_decode(token).id;
     var extendeduser = {
       height: req.body.height, //String
       weight: req.body.weight, //Number
@@ -253,7 +284,7 @@ exports.updateExtendedProfile = (req, res) => {
       age: req.body.age, //Number
     };
     ExtendedUser.update(extendeduser, {
-      where: { id: req.params.id },
+      where: { id: id },
     })
       .then((data) => {
         return res.send({ data: { data }, success: true });
