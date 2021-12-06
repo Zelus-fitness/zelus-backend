@@ -139,6 +139,7 @@ exports.signIn = async (req, res) => {
 // Sign out
 exports.signOut = (req, res) => {
   req.logout();
+  res.send({success:true})
 };
 
 // Return basic profile information
