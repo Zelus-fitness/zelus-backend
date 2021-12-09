@@ -139,7 +139,7 @@ exports.signIn = async (req, res) => {
 // Sign out
 exports.signOut = (req, res) => {
   req.logout();
-  res.send({success:true})
+  res.send({ success: true });
 };
 
 // Return basic profile information
@@ -318,10 +318,11 @@ exports.getExercise = (req, res) => {
       .then((data) => {
         res.send({
           id: data.id,
-          name: data.name,
           details: data.details,
           type: data.type,
           created_by: data.created_by,
+          category: data.category,
+          created_at: data.created_at,
         });
       })
       .catch((err) => {
@@ -471,6 +472,7 @@ exports.editExercise = (req, res) => {
       name: req.body.name,
       details: req.body.details,
       type: req.body.type,
+      category: req.body.category
     };
     Exercise.update(exercise, {
       where: { id: req.params.id },
