@@ -339,7 +339,7 @@ exports.getExercise = (req, res) => {
 
 //Create Exercise
 exports.createExercise = (req, res) => {
-  var correct_keys = ["sets", "reps", "rpe"];
+  var correct_keys = ["sets", "reps", "weight"];
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
@@ -367,6 +367,7 @@ exports.createExercise = (req, res) => {
         typeof exercise_details[i][key] != "number" ||
         exercise_details[i][key] % 1 != 0
       ) {
+        console.log("hello1");
         return res.status(400).send({
           message: "There is a type error",
         });
@@ -422,7 +423,7 @@ exports.createExercise = (req, res) => {
 
 // Edit exercise
 exports.editExercise = (req, res) => {
-  var correct_keys = ["sets", "reps", "rpe"];
+  var correct_keys = ["sets", "reps", "weight"];
   if (
     req.body &&
     Object.keys(req.body).length === 0 &&
@@ -460,6 +461,8 @@ exports.editExercise = (req, res) => {
       if (Number.isInteger(i[key])) {
         continue;
       } else {
+        console.log("hello2");
+
         return res.status(400).send({
           message: "There is a type error",
         });
@@ -898,16 +901,19 @@ exports.createWorkout = (req, res) => {
           });
         }
         //Type checking for details object
-        for (key in detail_object) {
-          if (
-            typeof detail_object[key] != "number" ||
-            detail_object[key] % 1 != 0
-          ) {
-            return res.status(400).send({
-              message: "There is a type error",
-            });
-          }
-        }
+        // for (key in detail_object) {
+        //   console.log(typeof detail_object[key]);
+        //   if (
+        //     typeof detail_object[key] != "number" ||
+        //     detail_object[key] % 1 != 0
+        //   ) {
+        //     console.log("hello3");
+
+        //     return res.status(400).send({
+        //       message: "There is a type error",
+        //     });
+        //   }
+        // }
       }
     }
 
@@ -1059,6 +1065,8 @@ exports.editWorkout = async (req, res) => {
             typeof detail_object[key] != "number" ||
             detail_object[key] % 1 != 0
           ) {
+            console.log("hello4");
+
             return res.status(400).send({
               message: "There is a type error",
             });
