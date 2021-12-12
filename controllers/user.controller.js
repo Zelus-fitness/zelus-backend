@@ -472,7 +472,7 @@ exports.editExercise = (req, res) => {
       name: req.body.name,
       details: req.body.details,
       type: req.body.type,
-      category: req.body.category
+      category: req.body.category,
     };
     Exercise.update(exercise, {
       where: { id: req.params.id },
@@ -850,7 +850,7 @@ exports.getWorkout = async (req, res) => {
 exports.createWorkout = (req, res) => {
   var correct_keys_workout = ["name", "exercise", "public", "time", "notes"];
   var correct_keys_exercises = ["type", "details", "category"];
-  var correct_keys_details = ["set", "reps", "lbs"];
+  var correct_keys_details = ["set", "reps", "weight"];
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
@@ -1004,7 +1004,7 @@ exports.createWorkout = (req, res) => {
 exports.editWorkout = async (req, res) => {
   var correct_keys_workout = ["name", "exercise", "public", "time", "notes"];
   var correct_keys_exercises = ["type", "details", "category"];
-  var correct_keys_details = ["set", "reps", "lbs"];
+  var correct_keys_details = ["set", "reps", "weight"];
 
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
