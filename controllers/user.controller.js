@@ -367,7 +367,6 @@ exports.createExercise = (req, res) => {
         typeof exercise_details[i][key] != "number" ||
         exercise_details[i][key] % 1 != 0
       ) {
-
         return res.status(400).send({
           message: "There is a type error",
         });
@@ -461,8 +460,6 @@ exports.editExercise = (req, res) => {
       if (Number.isInteger(i[key])) {
         continue;
       } else {
-
-
         return res.status(400).send({
           message: "There is a type error",
         });
@@ -1065,8 +1062,6 @@ exports.editWorkout = async (req, res) => {
             typeof detail_object[key] != "number" ||
             detail_object[key] % 1 != 0
           ) {
-
-
             return res.status(400).send({
               message: "There is a type error",
             });
@@ -1477,6 +1472,41 @@ exports.unfavoriteWorkout = (req, res) => {
         console.log(err);
         return res.status(400).send({
           message: "There has been an error trying to unfavorite this exercise",
+          success: false,
+        });
+      });
+  } else {
+    return res.status(403).send({ message: "Unauthorized", success: false });
+  }
+};
+
+exports.getPublicWorkouts = (req, res) => {
+  var token = getToken(req.headers);
+  jwt.verify(token, "nodeauthsecret", function (err, data) {
+    if (err) {
+      return res.status(400).send({
+        message: "Bad token",
+        success: false,
+      });
+    }
+  });
+
+  if (token) {
+    Workout.findAll({
+      where: {
+        public: true,
+      },
+    })
+      .then((data) => {
+        res.send({
+          data: data,
+          success: true,
+        });
+      })
+      .catch((error) => {
+        console.log(error);
+        return res.status(400).send({
+          message: "There has been an error trying to get public workouts",
           success: false,
         });
       });

@@ -72,6 +72,9 @@ module.exports = (app) => {
   // Unfavorites workout, :id" in the url is workout ID
   router.post("/unfavoriteworkout/:id", users.unfavoriteWorkout);
 
+  // Return random public workouts
+  router.get("/publicworkout", users.getPublicWorkouts)
+
   // Test JWT and token authorization
   router.get("/test", users.test);
 
