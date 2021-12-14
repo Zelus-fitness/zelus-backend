@@ -841,7 +841,7 @@ exports.getWorkout = async (req, res) => {
     });
     return_data["exercise"] = exercise_data;
 
-    res.send(return_data);
+    res.send({ data: return_data, success: true });
   } else {
     return res.status(403).send({ message: "Unauthorized.", success: false });
   }
@@ -1004,6 +1004,7 @@ exports.createWorkout = (req, res) => {
     return res.status(403).send({ message: "Unauthorized.", success: false });
   }
 };
+
 exports.editWorkout = async (req, res) => {
   var correct_keys_workout = ["name", "exercise", "public", "time", "notes"];
   var correct_keys_exercises = ["type", "details", "category"];
@@ -1030,6 +1031,7 @@ exports.editWorkout = async (req, res) => {
     );
 
     if (!hasAllKeysWorkout) {
+      console.log("here1");
       return res.status(400).send({
         message: "There has been an error with your Object key.",
       });
@@ -1041,6 +1043,8 @@ exports.editWorkout = async (req, res) => {
         exercise_object.hasOwnProperty(item)
       );
       if (!hasAllKeysExercise) {
+        console.log("here2");
+
         return res.status(400).send({
           message: "There has been an error with your Object key.",
         });
@@ -1052,32 +1056,43 @@ exports.editWorkout = async (req, res) => {
           detail_object.hasOwnProperty(item)
         );
         if (!hasAllKeysDetail) {
+          console.log("here3");
+
           return res.status(400).send({
             message: "There has been an error with your Object key.",
           });
         }
         //Type checking for details object
-        for (key in detail_object) {
-          if (
-            typeof detail_object[key] != "number" ||
-            detail_object[key] % 1 != 0
-          ) {
-            return res.status(400).send({
-              message: "There is a type error",
-            });
-          }
-        }
+        // for (key in detail_object) {
+        //   if (
+        //     typeof detail_object[key] != "number" ||
+        //     detail_object[key] % 1 != 0
+        //   ) {
+        //     console.log("hello5")
+        //     return res.status(400).send({
+        //       message: "There is a type error",
+        //     });
+        //   }
+        // }
       }
     }
+
+    var temp_exercises_id_array = await Workout.findByPk(workout_obj.id);
 
     var exercise_obj = workout_obj["exercise"];
     try {
       for (var i = 0; i < exercise_obj.length; i++) {
-        if (!("id" in exercise_obj[i])) {
+        // if (!("id" in exercise_obj[i]))
+        if (
+          !temp_exercises_id_array.dataValues.exercise.includes(
+            exercise_obj[i]["id"]
+          )
+        ) {
           var temp_exercise_object = {
             name: exercise_obj[i]["name"],
             details: exercise_obj[i]["details"],
             type: exercise_obj[i]["type"],
+            category: exercise_obj[i]["category"],
             created_by: id,
           };
 
@@ -1097,9 +1112,24 @@ exports.editWorkout = async (req, res) => {
               where: { id: id },
             }
           );
+
+          var workout_exercise_array = await Workout.update(
+            {
+              exercise: sequelize_function.fn(
+                "array_append",
+                sequelize_function.col("exercise"),
+                exercise_return_data["id"]
+              ),
+            },
+            {
+              where: {
+                id: workout_obj.id,
+              },
+            }
+          );
         } else if ("id" in exercise_obj[i]) {
           var temp_exercise = {
-            name: exercise_obj[i]["name"],
+            category: exercise_obj[i]["category"],
             details: exercise_obj[i]["details"],
             type: exercise_obj[i]["type"],
           };
@@ -1113,6 +1143,7 @@ exports.editWorkout = async (req, res) => {
       var temp_workout = {
         name: workout_obj["name"],
         public: workout_obj["public"],
+        notes: workout_obj["notes"],
       };
       var workout_update = await Workout.update(temp_workout, {
         where: { id: req.params.id },
@@ -1124,7 +1155,7 @@ exports.editWorkout = async (req, res) => {
           success: true,
         });
       } else if (workout_update[0] === 0) {
-        res.send(400).send({
+        res.status(400).send({
           message: `Cannot update Workout`,
           success: false,
         });
@@ -1480,7 +1511,7 @@ exports.unfavoriteWorkout = (req, res) => {
   }
 };
 
-exports.getPublicWorkouts = (req, res) => {
+exports.getPublicWorkouts = async (req, res) => {
   var token = getToken(req.headers);
   jwt.verify(token, "nodeauthsecret", function (err, data) {
     if (err) {
@@ -1492,24 +1523,37 @@ exports.getPublicWorkouts = (req, res) => {
   });
 
   if (token) {
-    Workout.findAll({
+    var workout_data = await Workout.findAll({
+      raw: true,
+      nest: true,
       where: {
         public: true,
       },
-    })
-      .then((data) => {
-        res.send({
-          data: data,
-          success: true,
-        });
-      })
-      .catch((error) => {
-        console.log(error);
-        return res.status(400).send({
-          message: "There has been an error trying to get public workouts",
-          success: false,
-        });
+    });
+    var return_data = workout_data;
+    for (var i = 0; i < return_data.length; i++) {
+      var exercise_data = await Exercise.findAll({
+        raw: true,
+        nest: true,
+        where: { id: return_data[i]["exercise"] },
       });
+      return_data[i]["exercise"] = exercise_data;
+    }
+
+    res.send({ data: return_data, success: true });
+    // .then((data) => {
+    //   res.send({
+    //     data: data,
+    //     success: true,
+    //   });
+    // })
+    // .catch((error) => {
+    //   console.log(error);
+    //   return res.status(400).send({
+    //     message: "There has been an error trying to get public workouts",
+    //     success: false,
+    //   });
+    // });
   } else {
     return res.status(403).send({ message: "Unauthorized", success: false });
   }
